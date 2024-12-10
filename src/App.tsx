@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import Login from 'components/Login'
 import Spinner from 'components/Spinner'
@@ -6,47 +6,79 @@ import { useChatStore } from 'lib/stores/chat'
 import { getAccount, useUserStore } from 'lib/stores/user'
 import { useDatasetStore } from 'lib/stores/datasets'
 import Widget from './Widget'
-import { Alert } from 'components/Alert'
-import ErrorAlert from 'components/ErrorAlert'
 import { Button } from 'components/Button'
 import { API_URL } from 'lib/constants'
 import { toast } from 'sonner'
+import { useCustomizationStore } from 'lib/stores/customization'
+import { useLayoutStore } from 'lib/stores/layout'
 
 const App: React.FC = () => {
-  const { updateChats, updateSuggestions, setCurrentChatId, deleteChat } =
+  const { fetchChats, fetchSuggestions, setCurrentChatId, setChatInput } =
     useChatStore()
   const {
     user,
     updateUserData,
     userLoading,
     setAccount,
-    setUser,
     unauthorized,
     logout,
+    setError,
   } = useUserStore()
-  const { updateDatasets } = useDatasetStore()
-  const [error, setError] = useState<string | null>(null)
+  const { fetchDataAssets } = useDatasetStore()
+  const {
+    setShowOpenInFullButton,
+    setShowWidgetBorder,
+    setShowExpandButton,
+    setShowMinimizeButton,
+  } = useCustomizationStore()
+  const { toggleSidebar, setExpanded } = useLayoutStore()
 
   useEffect(() => {
     updateUserData()
-  }, [])
+  }, [updateUserData])
 
   useEffect(() => {
     if (user) {
-      updateChats()
-      updateDatasets()
-      updateSuggestions()
+      fetchChats()
+      fetchDataAssets()
+      fetchSuggestions()
     }
-  }, [user])
+  }, [user, fetchChats, fetchDataAssets, fetchSuggestions])
 
   useEffect(() => {
     const queryString = window.location.search
     const urlParams = new URLSearchParams(queryString) // doesn't work in IE, but who cares ;)
     const account = urlParams.get('account') ?? 'tapforce'
-    if (account) {
-      setAccount(account)
+    const showOpenInFullButton = urlParams.get('showOpenInFullButton') ?? 'true'
+    const showWidgetBorder = urlParams.get('showBorder') ?? 'true'
+    const parentQuery = urlParams.get('parentParams') ?? ''
+    const showMinimizeButton = urlParams.get('showMinimizeButton') ?? 'true'
+    const showExpandButton = urlParams.get('showExpandButton') ?? 'true'
+    const expanded = urlParams.get('expanded') ?? 'false'
+    const parentUrlParams = new URLSearchParams(parentQuery)
+
+    const error = parentUrlParams.get('error')
+
+    if (error) {
+      setError(error)
+      toast.error(error, { duration: 10000 })
     }
-  }, [])
+
+    setAccount(account)
+    setShowOpenInFullButton(showOpenInFullButton === 'true')
+    setShowWidgetBorder(showWidgetBorder === 'true')
+    setShowExpandButton(showExpandButton === 'true')
+    setShowMinimizeButton(showMinimizeButton === 'true')
+    setExpanded(expanded === 'true')
+  }, [
+    setAccount,
+    setError,
+    setExpanded,
+    setShowExpandButton,
+    setShowMinimizeButton,
+    setShowOpenInFullButton,
+    setShowWidgetBorder,
+  ])
 
   useEffect(() => {
     const handleMessage = async (evt: any) => {
@@ -68,6 +100,9 @@ const App: React.FC = () => {
                   credentials: 'include',
                 },
               )
+              if (!response.ok) {
+                throw new Error('Chat not found')
+              }
               const data = await response.json()
               useChatStore.getState().addChat(data)
             } catch (e: any) {
@@ -76,13 +111,22 @@ const App: React.FC = () => {
           }
           setCurrentChatId(evt.data.setChatId)
         }
+        if ('setShowOpenInFullButton' in evt.data) {
+          setShowOpenInFullButton(evt.data.setShowOpenInFullButton)
+        }
+        if ('setChatInput' in evt.data) {
+          setChatInput(evt.data.setChatInput)
+        }
+        if ('toggleSidebar' in evt.data) {
+          toggleSidebar()
+        }
       }
     }
 
     window.addEventListener('message', handleMessage)
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setCurrentChatId])
+  }, [setChatInput, setCurrentChatId, setShowOpenInFullButton, toggleSidebar])
 
   return (
     <>
@@ -100,20 +144,8 @@ const App: React.FC = () => {
           <Widget />
         )
       ) : (
-        <Login
-        />
+        <Login />
       )}
-      <div className='fixed bottom-0 left-0 right-0 p-2'>
-        {/*
-      <Button onClick={()=>{
-        const chats = useChatStore.getState().chats
-        chats.forEach(chat => {
-          deleteChat(chat.id)
-        })
-      }}>Delete Chats</Button>
-      */}
-        {error && <ErrorAlert message={error} />}
-      </div>
     </>
   )
 }

@@ -1,6 +1,6 @@
-import { Button, TooltipButton } from 'components/Button'
+import { TooltipButton } from 'components/Button'
 import { useLayoutStore } from 'lib/stores/layout'
-import { ChevronDown, Maximize } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 const ExpandButton: React.FC = () => {
   const { hideWidget } = useLayoutStore()

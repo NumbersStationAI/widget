@@ -1,14 +1,8 @@
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from '@radix-ui/react-icons'
-import { Table } from '@tanstack/react-table'
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import { Button } from 'components/Button'
 import Spinner from 'components/Spinner'
 
-interface DataTablePaginationProps<TData> {
+interface DataTablePaginationProps {
   totalRowCount: number
   currentStartIndex: number
   rowsPerPage: number
@@ -17,14 +11,14 @@ interface DataTablePaginationProps<TData> {
   paginating: boolean
 }
 
-export function DataTablePagination<TData>({
+export function DataTablePagination({
   totalRowCount,
   currentStartIndex,
   rowsPerPage,
   onPreviousPage,
   onNextPage,
   paginating,
-}: DataTablePaginationProps<TData>) {
+}: DataTablePaginationProps) {
   return (
     <div className='flex items-center justify-between gap-4 py-2'>
       <div className='flex-1' />

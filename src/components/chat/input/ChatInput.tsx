@@ -8,15 +8,9 @@ import {
 } from 'lexical-beautiful-mentions'
 import { useDatasetStore } from 'lib/stores/datasets'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { getAccount, useUserStore } from 'lib/stores/user'
+import { getAccount } from 'lib/stores/user'
+import { clearContent, getContent, useChatStore } from 'lib/stores/chat'
 import {
-  clearContent,
-  getContent,
-  isContentEmpty,
-  useChatStore,
-} from 'lib/stores/chat'
-import {
-  $getRoot,
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_LOW,
@@ -30,7 +24,7 @@ import SendButton from '../SendButton'
 import ChatInputToolbar from './ChatInputToolbar'
 import { API_URL } from 'lib/constants'
 
-const ChatInput: React.FC = ({}) => {
+const ChatInput: React.FC = () => {
   const [editor] = useLexicalComposerContext()
   const setChatEditor = useChatStore((state) => state.setChatEditor)
   const {
@@ -48,7 +42,48 @@ const ChatInput: React.FC = ({}) => {
   })
   const { datasets } = useDatasetStore()
   const { getMentions } = useBeautifulMentions()
-  const [currentMentions, setCurrentMentions] = useState<any[]>([])
+
+  const handleInterrupt = useCallback(async () => {
+    await fetch(
+      `${API_URL}/v3/orgs/${getAccount()}/chat/${useChatStore.getState().currentChatId}/interrupt`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      },
+    )
+    removeLoadingMessage()
+  }, [removeLoadingMessage])
+
+  const handleSend = useCallback(async () => {
+    let content = getContent()
+    useDatasetStore.getState().datasets.forEach((dataset) => {
+      const pattern = new RegExp(`@${dataset.name}`, 'g')
+      content = content.replace(pattern, `@[${dataset.name}](${dataset.id})`)
+    })
+    clearContent()
+
+    sendMessage(content)
+  }, [sendMessage])
+
+  const handleSubmit = useCallback(
+    (keyboardCommand = false) => {
+      const currentChatId = useChatStore.getState().currentChatId
+      const inputState = useChatStore.getState().inputState.get(currentChatId)
+      switch (inputState) {
+        case 'send':
+          handleSend()
+          break
+        case 'interrupt':
+          if (!keyboardCommand) {
+            handleInterrupt()
+          }
+          break
+        default:
+          break
+      }
+    },
+    [handleInterrupt, handleSend],
+  )
 
   useEffect(() => {
     setChatEditor(editor)
@@ -97,7 +132,7 @@ const ChatInput: React.FC = ({}) => {
       }
       forceUpdate()
     })
-  }, [])
+  }, [editor, getMentions, handleSubmit, setChatEditor, updateDisabledState])
 
   useEffect(() => {
     // const mentions = getMentions()
@@ -113,44 +148,6 @@ const ChatInput: React.FC = ({}) => {
     forceUpdate()
   }, [datasets])
 
-  const handleSubmit = (keyboardCommand = false) => {
-    const currentChatId = useChatStore.getState().currentChatId
-    const inputState = useChatStore.getState().inputState.get(currentChatId)
-    switch (inputState) {
-      case 'send':
-        handleSend()
-        break
-      case 'interrupt':
-        if (!keyboardCommand) {
-          handleInterrupt()
-        }
-        break
-      default:
-        break
-    }
-  }
-
-  const handleInterrupt = async () => {
-    await fetch(
-      `${API_URL}/v3/orgs/${getAccount()}/chat/${useChatStore.getState().currentChatId}/interrupt`,
-      {
-        method: 'POST',
-        credentials: 'include',
-      },
-    )
-    removeLoadingMessage()
-  }
-
-  const handleSend = async () => {
-    let content = getContent()
-    useDatasetStore.getState().datasets.forEach((dataset) => {
-      const pattern = new RegExp(`@${dataset.name}`, 'g')
-      content = content.replace(pattern, `@[${dataset.name}](${dataset.id})`)
-    })
-    clearContent()
-
-    sendMessage(content)
-  }
   return (
     <div className='flex w-full max-w-full flex-col items-center rounded-lg border border-border bg-white px-3 py-2 md:w-[35rem] lg:w-[43rem] xl:w-[53rem]'>
       <MentionsBar />

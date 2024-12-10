@@ -1,10 +1,8 @@
-import { Button, TooltipButton } from 'components/Button'
+import { TooltipButton } from 'components/Button'
 import { Popover, PopoverContent, PopoverTrigger } from 'components/Popover'
 import { useBeautifulMentions } from 'lexical-beautiful-mentions'
-import { ReactComponent as At } from 'lib/icons/at.svg'
 import { AtSign } from 'lucide-react'
 import { MentionsMenu, MentionsMenuItem } from './MentionsMenu'
-import { useEffect } from 'react'
 
 interface ChatInputToolbarProps {
   currentMentions: any[]
@@ -13,7 +11,7 @@ interface ChatInputToolbarProps {
 const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   currentMentions,
 }) => {
-  const { openMentionMenu, insertMention } = useBeautifulMentions()
+  const { insertMention } = useBeautifulMentions()
 
   return (
     <Popover>

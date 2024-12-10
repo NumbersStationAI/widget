@@ -18,7 +18,7 @@ interface Props {
 
 const OldChatInput: React.FC<Props> = ({ onSubmit }) => {
   const [query, setQuery] = useState('')
-  const [selectedDataset, setSelectedDataset] = useState('Banking Customers')
+  const [selectedDataset] = useState('Banking Customers')
 
   const handleSubmit = () => {
     if (query.trim()) {

@@ -6,7 +6,6 @@ import {
   getDataAssetConnectionIcon,
   getDataAssetTypeIcon,
 } from 'lib/utils/dataAsset'
-import { Layers, NotebookText } from 'lucide-react'
 import { forwardRef } from 'react'
 
 export const MentionsMenu: React.FC<BeautifulMentionsMenuProps> = ({
@@ -35,7 +34,7 @@ export const MentionsMenuItem = forwardRef<
       ref={ref}
     >
       <Icon className='max-h-4 min-h-4 min-w-4 max-w-4 text-foreground/70' />
-      <span className='mx-2'>{label}</span>
+      <span className='mx-2 overflow-hidden text-ellipsis'>{label}</span>
       <div className='flex-1' />
       <ConnectionIcon className='max-h-4 min-h-4 min-w-4 max-w-4' />
     </li>

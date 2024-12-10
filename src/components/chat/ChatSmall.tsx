@@ -1,5 +1,3 @@
-import { Button } from 'components/Button'
-import { ReactComponent as Menu } from 'lib/icons/menu.svg'
 import Sidebar from './Sidebar'
 import ExpandButton from './ExpandButton'
 import MessageView from './MessageView'
@@ -9,7 +7,7 @@ import ChatInput from './input/ChatInput'
 import NewChatButton from './NewChatButton'
 import SidebarButton from './SidebarButton'
 
-const ChatSmall: React.FC = ({}) => {
+const ChatSmall: React.FC = () => {
   const { showSidebar, setShowSidebar } = useLayoutStore()
 
   return (

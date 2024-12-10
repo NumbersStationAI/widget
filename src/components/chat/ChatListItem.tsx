@@ -28,9 +28,9 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
       key={index}
       className={`relative h-9 px-3 ${
         currentChatId === chat.id || open
-          ? 'bg-[hsl(var(--primary)/0.06)] text-foreground'
+          ? 'bg-hover text-foreground'
           : 'text-foreground/75'
-      } group flex items-center justify-between rounded-md text-left font-medium hover:bg-primary/10`}
+      } group flex items-center justify-between rounded-md text-left font-medium hover:bg-hover`}
     >
       <button
         className={`h-full flex-1 text-start text-sm`}

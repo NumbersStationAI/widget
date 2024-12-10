@@ -9,6 +9,7 @@ type LayoutStore = {
   toggleExpanded: () => void
   hideWidget: () => void
   setViewportWidth: (width: number) => void
+  toggleSidebar: () => void
 }
 
 export const useLayoutStore = create<LayoutStore>()((set, get) => ({
@@ -16,10 +17,11 @@ export const useLayoutStore = create<LayoutStore>()((set, get) => ({
   showSidebar: false,
   viewportWidth: 0,
   setViewportWidth: (width) => set({ viewportWidth: width }),
-  setExpanded: (expanded) => set({ expanded, showSidebar: false }),
+  setExpanded: (expanded) => set({ expanded, showSidebar: expanded }),
   setShowSidebar: (showSidebar) => set({ showSidebar }),
   toggleExpanded: () => get().setExpanded(!get().expanded),
   hideWidget: () => {
     window.parent.postMessage('hide', '*')
   },
+  toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
 }))

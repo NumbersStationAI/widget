@@ -1,6 +1,5 @@
 import { useChatStore } from 'lib/stores/chat'
-import ChatMessageWidget from './ChatMessage'
-import MessageGroup from './MessageGroup'
+import MessageGroup from './MessageGroupView'
 
 const OnboardingMessage: React.FC = () => {
   const { suggestions } = useChatStore()
@@ -22,6 +21,7 @@ You’re now connected with your dedicated AI assistant, designed to go beyond t
         },
       ]}
       sender='ai'
+      showCopyActions={false}
     />
   )
 }

@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect } from 'react'
 import { useWidget } from './ChatProvider'
 import { useLayoutStore } from 'lib/stores/layout'
 import ChatView from 'components/chat/ChatView'
 
 interface WidgetProps {}
 
-const Widget: React.FC<WidgetProps> = ({}) => {
+const Widget: React.FC<WidgetProps> = () => {
   const { expand, shrink } = useWidget()
   const { expanded } = useLayoutStore()
 
@@ -15,7 +15,7 @@ const Widget: React.FC<WidgetProps> = ({}) => {
     } else {
       shrink()
     }
-  }, [expanded])
+  }, [expand, expanded, shrink])
 
   return (
     <div className='h-full w-full overflow-clip bg-transparent'>

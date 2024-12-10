@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import ProgressMessages from 'components/chat/messages/ProgressMessages'
-import VegaEmbed from 'components/chat/messages/VegaEmbed'
 
 const meta = {
   title: 'Chat/Messages/ProgressMessages',

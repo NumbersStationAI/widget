@@ -1,6 +1,6 @@
 import { Button, TooltipButton } from 'components/Button'
 import { Markdown } from 'components/Markdown'
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from 'components/Sheet'
+import { Sheet, SheetClose, SheetContent } from 'components/Sheet'
 import { Code, Copy } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -23,7 +23,7 @@ const CodeSheet: React.FC<CodeSheetProps> = ({ code, language }) => {
       >
         <Code />
       </TooltipButton>
-      <SheetContent className='flex w-full max-w-[42rem] flex-col overflow-auto p-0 sm:w-[50vw]'>
+      <SheetContent className='flex w-full max-w-[42rem] flex-col p-0 sm:w-[50vw]'>
         <div className='flex items-center gap-2 border-b px-4 py-2'>
           <p>{language}</p>
           <div className='flex-1' />
@@ -39,7 +39,9 @@ const CodeSheet: React.FC<CodeSheetProps> = ({ code, language }) => {
           </Button>
           <SheetClose className='p-2' />
         </div>
-        <Markdown className='w-full text-xs'>{`\`\`\`${language.toLowerCase()}\n${code}\n\`\`\``}</Markdown>
+        <div className='h-full max-h-full w-full max-w-full overflow-auto'>
+          <Markdown className='w-full text-xs'>{`\`\`\`${language.toLowerCase()}\n${code}\n\`\`\``}</Markdown>
+        </div>
       </SheetContent>
     </Sheet>
   )

@@ -1,37 +1,32 @@
 # Numbers Station Embeddable Widget
 
-## Demo
+## Development
 
-You can play with he demo here: https://embeddable-testbed.vercel.app/
+This is a `create-react-app`. You can build it like so:
 
-## Usage
+- Install dependencies
 
-### Basic Integration
-To embed the widget, include the following script (ideally in the app head):
-```html
-<script src=`${PUBLIC_WIDGET_URL}/loader.js` data-account=`${ACCOUNT_NAME}`></script>
-```
-where 
-- `ACCOUNT_NAME` should be your account name on [app.numbersstation.ai](https://app.numbersstation.ai/)
-- `PUBLIC_WIDGET_URL` should be the url where the widget is hosted.
-
-The widget should now appear in the bottom-left of the screen.
-
-### API
-To use the api, include the following script as well:
-```html
-<script src=`${PUBLIC_WIDGET_URL}/widgetApi.js`></script>
-```
-Then to use the api
-```ts
-widgetApi().then((api) => {
-  api.setChatId(chatId);
-});
+```bash
+npm install
 ```
 
-## API 
+- (Optional) For developing, start app on localhost
 
-- `setChatId(chatId : string)` Navigates to the chat with the provided chat id. Only chats belonging to the account can be passed in.
-- `hide()`: Hides the widget
-- `show()`: Shows the widget
-- `toggle()`: Toggles widget visibility
+```bash
+npm run start
+```
+
+- Run build command
+
+```bash
+npm run build
+```
+
+- The build files should now be in `build` folder, ready to be deployed aand served. This includes
+  - `index.html` The entry point for the react app
+  - `loader.js` The script that is used to load the react widget in the target webiste
+  - `widgetApi.js` The script that loads the js api to be used in the target website
+
+## Documentation
+
+Please visit [Numbers Station Widget API Documentation](https://docs.numbersstation.ai/api/guides/embed-widget/) for the embed widget implementation guide.

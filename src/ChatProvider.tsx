@@ -1,4 +1,4 @@
-import { Component, createContext, useContext, useState } from 'react'
+import { createContext, useContext } from 'react'
 
 interface WidgetContextProps {
   hide: () => void

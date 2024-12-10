@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import Tableau from 'components/chat/messages/Tableau'
-import VegaEmbed from 'components/chat/messages/VegaEmbed'
 
 const meta = {
   title: 'Chat/Messages/Tableau',

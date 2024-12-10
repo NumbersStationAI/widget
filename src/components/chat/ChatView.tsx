@@ -12,10 +12,14 @@ import HideButton from './HideButton'
 import ChatInput from './input/ChatInput'
 import SidebarButton from './SidebarButton'
 import { useBreakpoint } from 'lib/hooks/tailwind'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useCustomizationStore } from 'lib/stores/customization'
 
-const ChatView: React.FC = ({}) => {
+const ChatView: React.FC = () => {
   const { showSidebar, setShowSidebar, expanded } = useLayoutStore()
+  const { showWidgetBorder, showExpandButton, showMinimizeButton } =
+    useCustomizationStore()
+  const [animateSidebar, setAnimateSidebar] = useState(true)
   const isDesktop = useBreakpoint('md')
 
   const showExpandedView = useMemo(() => {
@@ -25,11 +29,11 @@ const ChatView: React.FC = ({}) => {
   return (
     <ResizablePanelGroup
       direction='horizontal'
-      className='h-full w-full overflow-clip border border-border/50 bg-white'
+      className={`h-full w-full overflow-clip ${showWidgetBorder && 'border border-border/50'} bg-white`}
     >
       <ResizablePanel
         defaultSize={25}
-        className={`${showSidebar && showExpandedView ? 'min-w-[13rem] max-w-[32rem]' : 'w-0 max-w-0'}`}
+        className={`${showSidebar && showExpandedView ? 'min-w-[13rem] max-w-[32rem]' : 'w-0 max-w-0'} ${animateSidebar && 'transition-all'}`}
       >
         {showExpandedView ? (
           <Sidebar onChatSelected={() => {}} />
@@ -47,7 +51,17 @@ const ChatView: React.FC = ({}) => {
           </>
         )}
       </ResizablePanel>
-      {showExpandedView && <ResizableHandle />}
+      {showExpandedView && (
+        <ResizableHandle
+          onDragging={(isDragging) => {
+            if (isDragging) {
+              setAnimateSidebar(false)
+            } else {
+              setAnimateSidebar(true)
+            }
+          }}
+        />
+      )}
 
       <ResizablePanel
         defaultSize={75}
@@ -59,8 +73,8 @@ const ChatView: React.FC = ({}) => {
           {!showSidebar && <SidebarButton />}
           <div className='h-10 flex-1' />
           {(!showSidebar || !showExpandedView) && <NewChatButton expanded />}
-          <ExpandButton />
-          <HideButton />
+          {showExpandButton && <ExpandButton />}
+          {showMinimizeButton && <HideButton />}
         </div>
         <MessageView />
         <div

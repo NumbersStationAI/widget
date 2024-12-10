@@ -1,10 +1,8 @@
-import Spinner from 'components/Spinner'
-import { ChatMessage } from 'lib/models/message'
-import { getAccount, useUserStore } from 'lib/stores/user'
+import { getAccount } from 'lib/stores/user'
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { replaceAll } from 'lib/utils/string'
 import { API_URL } from 'lib/constants'
-import { ArrowDown, ArrowDownUp, ArrowUp } from 'lucide-react'
+import { ArrowDown, ArrowUp } from 'lucide-react'
 import {
   Column,
   flexRender,
@@ -25,6 +23,7 @@ import {
 import { DataTablePagination } from './DataTablePagination'
 import DataTableToolbar from './DataTableToolbar'
 import DataTableColumnMenu, { ColumnSort } from './DataTableColumnMenu'
+import { Skeleton } from 'components/Skeleton'
 
 interface Props {
   messageId: string
@@ -40,21 +39,20 @@ interface DataColumn {
 export type TableViewMode = 'default' | 'full' | 'wide'
 
 const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
-  const [isLoading, setIsLoadng] = useState(false)
   const [columns, setColumns] = useState<DataColumn[]>([])
   const [data, setData] = useState([])
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [currentPageIndex, setCurrentpageIndex] = useState(0)
+  const [rowsPerPage] = useState(10)
+  const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [totalRowCount, setTotalRowCount] = useState(0)
   const [sortedColumns, setSortedColumns] = useState<ColumnSort[]>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const { viewportWidth } = useLayoutStore()
   const tableRef = useRef<HTMLDivElement>(null)
   const [offsetLeft, setOffsetLeft] = useState(0)
-  const [isPaginating, setIsPaginating] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [tableViewMode, setTableViewMode] = useState<TableViewMode>('default')
   const [selectedCellId, setSelectedCellId] = useState<string>('')
+  const loadingTypeRef = useRef<'paginating' | 'refreshing'>('refreshing')
+  const [isLoading, setIsLoading] = useState(false)
 
   const table = useReactTable({
     data,
@@ -81,7 +79,6 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
 
   const toggleColumnSorting = useCallback(
     (column: string) => {
-      if (isRefreshing) return
       const index = sortedColumns.findIndex((c) => c.column === column)
       if (index !== -1) {
         const newColumns = [...sortedColumns]
@@ -101,85 +98,69 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
     [sortedColumns],
   )
 
-  const getTableData = useCallback(
-    async (type: 'paginating' | 'refreshing' | 'loading') => {
-      if (isLoading || isPaginating || isRefreshing) return
-      switch (type) {
-        case 'paginating':
-          setIsPaginating(true)
-          break
-        case 'refreshing':
-          setIsRefreshing(true)
-          break
-        case 'loading':
-          setIsLoadng(true)
-          break
-      }
-      try {
-        console.log(
-          'sortedColumns',
-          `${API_URL}/v3/orgs/${getAccount()}/messages/${messageId}/data?limit=${rowsPerPage}&skip=${currentPageIndex * rowsPerPage}&sort=${serializeColumnsSorting(sortedColumns)}`,
-        )
-        const response = await fetch(
-          `${API_URL}/v3/orgs/${getAccount()}/messages/${messageId}/data?limit=${rowsPerPage}&skip=${currentPageIndex * rowsPerPage}&sort=${serializeColumnsSorting(sortedColumns)}`,
-          {
-            credentials: 'include',
-          },
-        )
-        const data = await response.json()
-        setData(data.data)
-        setTotalRowCount(data.total)
-        setColumns(
-          Object.keys(data.data[0]).map((key) => ({
-            header: ({ column }) => {
-              const sort = sortedColumns.find((c) => c.column === key)
-              return (
-                <div className='group/header flex items-center gap-2'>
-                  <button
-                    className='flex flex-1 items-center justify-start gap-2'
-                    onClick={() => toggleColumnSorting(key)}
-                  >
-                    {replaceAll(key, '_', ' ')}
-                    {sort &&
-                      (sort?.direction === 'asc' ? (
-                        <ArrowUp className='h-4 w-4' />
-                      ) : (
-                        <ArrowDown className='h-4 w-4' />
-                      ))}
-                    <div className='flex-1' />
-                  </button>
-                  <div className='flex h-full items-center opacity-0 group-hover/header:opacity-100'>
-                    <DataTableColumnMenu
-                      columnKey={key}
-                      column={column}
-                      setSortedColumns={setSortedColumns}
-                      sortedColumns={sortedColumns}
-                      sort={sort}
-                    />
-                  </div>
+  const getTableData = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/messages/${messageId}/data?limit=${rowsPerPage}&skip=${currentPageIndex * rowsPerPage}&sort=${serializeColumnsSorting(sortedColumns)}`,
+        {
+          credentials: 'include',
+        },
+      )
+      const data = await response.json()
+      setData(data.data)
+      setTotalRowCount(data.total)
+      setColumns(
+        Object.keys(data.data[0]).map((key) => ({
+          header: ({ column }) => {
+            const sort = sortedColumns.find((c) => c.column === key)
+            return (
+              <div className='group/header flex items-center gap-2'>
+                <button
+                  className='flex flex-1 items-center justify-start gap-2'
+                  onClick={() => {
+                    loadingTypeRef.current = 'refreshing'
+                    toggleColumnSorting(key)
+                  }}
+                >
+                  {replaceAll(key, '_', ' ')}
+                  {sort &&
+                    (sort?.direction === 'asc' ? (
+                      <ArrowUp className='h-4 w-4' />
+                    ) : (
+                      <ArrowDown className='h-4 w-4' />
+                    ))}
+                  <div className='flex-1' />
+                </button>
+                <div className='flex h-full items-center opacity-0 group-hover/header:opacity-100'>
+                  <DataTableColumnMenu
+                    columnKey={key}
+                    column={column}
+                    setSortedColumns={setSortedColumns}
+                    sortedColumns={sortedColumns}
+                    sort={sort}
+                    setLoadingType={() =>
+                      (loadingTypeRef.current = 'refreshing')
+                    }
+                  />
                 </div>
-              )
-            },
-            accessorKey: key,
-          })),
-        )
-      } catch (e: any) {
-        console.log(e.message)
-      }
-      switch (type) {
-        case 'paginating':
-          setIsPaginating(false)
-          break
-        case 'refreshing':
-          setIsRefreshing(false)
-          break
-        case 'loading':
-          setIsLoadng(false)
-          break
-      }
-    },
-    [messageId, rowsPerPage, currentPageIndex, sortedColumns],
-  )
+              </div>
+            )
+          },
+          accessorKey: key,
+        })),
+      )
+    } catch (e: any) {
+      console.error(e.message)
+    }
+    setIsLoading(false)
+  }, [
+    messageId,
+    rowsPerPage,
+    currentPageIndex,
+    sortedColumns,
+    toggleColumnSorting,
+  ])
 
   const handleDownload = useCallback(async () => {
     const response = await fetch(
@@ -205,25 +186,19 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
   }, [messageId])
 
   useEffect(() => {
-    if (table.getRowModel().rows?.length > 0) {
-      getTableData('paginating')
-    } else {
-      getTableData('loading')
-    }
-  }, [currentPageIndex, rowsPerPage])
-
-  useEffect(() => {
-    getTableData('refreshing')
-  }, [sortedColumns])
+    getTableData()
+  }, [currentPageIndex, getTableData, rowsPerPage, table])
 
   const onPreviousPage = useCallback(() => {
     if (currentPageIndex === 0) return
-    setCurrentpageIndex(currentPageIndex - 1)
+    loadingTypeRef.current = 'paginating'
+    setCurrentPageIndex(currentPageIndex - 1)
   }, [currentPageIndex])
 
   const onNextPage = useCallback(() => {
     if (currentPageIndex * rowsPerPage >= totalRowCount) return
-    setCurrentpageIndex(currentPageIndex + 1)
+    loadingTypeRef.current = 'paginating'
+    setCurrentPageIndex(currentPageIndex + 1)
   }, [currentPageIndex, totalRowCount, rowsPerPage])
 
   return (
@@ -239,100 +214,119 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
           width: tableViewMode === 'wide' ? viewportWidth - 64 : '',
         }}
       >
-        {isLoading ? (
-          streaming ? (
-            <></>
-          ) : (
-            <div
-              className='flex w-full items-center justify-center rounded-lg bg-[#F5F5F5]'
-              style={{ height: `${(rowsPerPage + 3) * 39}px` }}
-            >
-              <Spinner />
-            </div>
-          )
-        ) : (
-          <>
-            <DataTableToolbar
-              getTableData={() => getTableData('refreshing')}
-              isRefreshing={isRefreshing}
-              sql={sql ?? ''}
-              handleDownload={handleDownload}
-              table={table}
-              tableViewMode={tableViewMode}
-              setTableViewMode={setTableViewMode}
-            />
-            <div className='max-w-full overflow-hidden rounded-md shadow-[inset_0px_0px_0px_1px_hsl(var(--border))]'>
-              <Table className=''>
+        <DataTableToolbar
+          getTableData={() => {
+            loadingTypeRef.current = 'refreshing'
+            getTableData()
+          }}
+          isRefreshing={isLoading && loadingTypeRef.current === 'refreshing'}
+          sql={sql ?? ''}
+          handleDownload={handleDownload}
+          table={table}
+          tableViewMode={tableViewMode}
+          setTableViewMode={setTableViewMode}
+        />
+        <div className='max-w-full overflow-hidden rounded-md shadow-[inset_0px_0px_0px_1px_hsl(var(--border))]'>
+          <Table className=''>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header, index) => {
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={`h-10 whitespace-nowrap border border-border bg-[#F5F5F5] text-sm text-foreground`}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            {table.getRowModel().rows?.length ? (
+              <TableBody>
+                {table.getRowModel().rows.map((row, rowIndex) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell, columnIndex) => (
+                      <TableCell
+                        key={cell.id}
+                        className={`whitespace-nowrap border border-border text-foreground/75 ${selectedCellId === cell.id ? 'shadow-[inset_0px_0px_0px_1px_#000]' : 'border-border'}`}
+                        onClick={() =>
+                          selectedCellId === cell.id
+                            ? setSelectedCellId('')
+                            : setSelectedCellId(cell.id)
+                        }
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            ) : isLoading ? (
+              <>
                 <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header, index) => {
-                        return (
-                          <TableHead
-                            key={header.id}
-                            className={`h-10 whitespace-nowrap border border-border bg-[#F5F5F5] text-sm text-foreground`}
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        )
-                      })}
-                    </TableRow>
-                  ))}
+                  <TableRow>
+                    <TableHead
+                      className={`h-10 whitespace-nowrap border border-border bg-[#F5F5F5] p-1 text-sm text-foreground`}
+                    >
+                      <Skeleton className='h-full w-48 rounded-sm bg-[#DFDFDF]' />
+                    </TableHead>
+                    <TableHead
+                      className={`h-10 w-full whitespace-nowrap border border-border bg-[#F5F5F5] p-1 text-sm text-foreground`}
+                    >
+                      <Skeleton className='h-full w-48 rounded-sm bg-[#DFDFDF]' />
+                    </TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row, rowIndex) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && 'selected'}
-                      >
-                        {row.getVisibleCells().map((cell, columnIndex) => (
-                          <TableCell
-                            key={cell.id}
-                            className={`whitespace-nowrap border border-border text-foreground/75 ${selectedCellId === cell.id ? 'shadow-[inset_0px_0px_0px_1px_#000]' : 'border-border'}`}
-                            onClick={() =>
-                              selectedCellId === cell.id
-                                ? setSelectedCellId('')
-                                : setSelectedCellId(cell.id)
-                            }
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className='h-24 text-center'
-                      >
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  <TableRow>
+                    <TableCell
+                      key={1}
+                      className='h-10 border border-border text-center'
+                    ></TableCell>
+                    <TableCell
+                      key={2}
+                      className='h-10 border border-border text-center'
+                    ></TableCell>
+                  </TableRow>
                 </TableBody>
-              </Table>
-            </div>
-            {totalRowCount > rowsPerPage && (
-              <DataTablePagination
-                totalRowCount={totalRowCount}
-                currentStartIndex={currentPageIndex * rowsPerPage}
-                rowsPerPage={rowsPerPage}
-                onPreviousPage={onPreviousPage}
-                onNextPage={onNextPage}
-                paginating={isPaginating}
-              />
+              </>
+            ) : (
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='h-24 text-center'
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
             )}
-          </>
+          </Table>
+        </div>
+        {totalRowCount > rowsPerPage && (
+          <DataTablePagination
+            totalRowCount={totalRowCount}
+            currentStartIndex={currentPageIndex * rowsPerPage}
+            rowsPerPage={rowsPerPage}
+            onPreviousPage={onPreviousPage}
+            onNextPage={onNextPage}
+            paginating={isLoading && loadingTypeRef.current === 'paginating'}
+          />
         )}
       </div>
     </div>

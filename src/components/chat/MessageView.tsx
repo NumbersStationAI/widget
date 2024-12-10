@@ -1,42 +1,40 @@
 import Spinner from 'components/Spinner'
-import ChatMessageWidget from './messages/ChatMessage'
 import { useChatStore } from 'lib/stores/chat'
 import { ChatMessage } from 'lib/models/message'
-import { useEffect, useRef, useState } from 'react'
-import { findLastIndex } from 'lib/utils/array'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import OnboardingMessage from './messages/OnboardingMessage'
 import useSize from '@react-hook/size'
 import { useLayoutStore } from 'lib/stores/layout'
-import MessageGroup from './messages/MessageGroup'
+import MessageGroupView from './messages/MessageGroupView'
 
 interface MessageGroup {
+  userMessage?: ChatMessage
   sender: 'user' | 'ai'
   messages: ChatMessage[]
   streaming?: boolean
 }
 const MessageView: React.FC = () => {
-  const { currentChatMessages, loadingMessages, currentChatId, inputState } =
-    useChatStore()
+  const { currentChatMessages, loadingMessages, currentChatId } = useChatStore()
   const [messageGroups, setMessageGroups] = useState<MessageGroup[]>([])
   const { setViewportWidth } = useLayoutStore()
   const viewRef = useRef<HTMLDivElement>(null)
   const viewSize = useSize(viewRef)
 
-  const isLastMessageUser = (): boolean => {
+  const isLastMessageUser = useCallback((): boolean => {
     return (
       currentChatMessages.length > 0 &&
       currentChatMessages[currentChatMessages.length - 1].sending_agent ===
         'user'
     )
-  }
+  }, [currentChatMessages])
 
-  const isLastMessageLoading = (): boolean => {
+  const isLastMessageLoading = useCallback((): boolean => {
     return (
       currentChatMessages.length > 0 &&
       currentChatMessages[currentChatMessages.length - 1].render_type ===
         'LOADING'
     )
-  }
+  }, [currentChatMessages])
 
   const isScrollAtBottom = () => {
     return viewRef.current
@@ -58,10 +56,19 @@ const MessageView: React.FC = () => {
     }
     const tempMessageGroups: MessageGroup[] = []
     let currentGroup: MessageGroup | null = null
+    let currentUserMessage: ChatMessage | undefined = undefined
     currentChatMessages.forEach((message) => {
       const messageSender = message.sending_agent === 'user' ? 'user' : 'ai'
+      if (messageSender === 'user') {
+        currentUserMessage = message
+      }
       if (currentGroup === null || currentGroup.sender !== messageSender) {
-        currentGroup = { sender: messageSender, messages: [], streaming: false }
+        currentGroup = {
+          sender: messageSender,
+          messages: [],
+          streaming: false,
+          userMessage: currentUserMessage,
+        }
         tempMessageGroups.push(currentGroup)
       }
       currentGroup.messages.push(message)
@@ -69,11 +76,11 @@ const MessageView: React.FC = () => {
     })
 
     setMessageGroups([...tempMessageGroups])
-  }, [currentChatMessages])
+  }, [currentChatMessages, isLastMessageLoading, isLastMessageUser])
 
   useEffect(() => {
     setViewportWidth(viewSize[0])
-  }, [viewSize])
+  }, [setViewportWidth, viewSize])
 
   return (
     <div
@@ -91,11 +98,12 @@ const MessageView: React.FC = () => {
           ) : (
             messageGroups.map((messageGroup, groupIndex) => {
               return (
-                <MessageGroup
-                  key={groupIndex}
+                <MessageGroupView
+                  key={messageGroup.messages[0].id ?? `${currentChatId}-${groupIndex}`}
                   messages={messageGroup.messages}
                   sender={messageGroup.sender}
                   streaming={messageGroup.streaming}
+                  userMessage={messageGroup.userMessage}
                 />
               )
             })

@@ -1,9 +1,9 @@
 import { Chat } from 'lib/models/chat'
 import { ChatMessage } from 'lib/models/message'
 import { create } from 'zustand'
-import { getAccount, useUserStore } from './user'
+import { getAccount } from './user'
 import { isMessageEmpty } from 'lib/utils/message'
-import { $getRoot, EditorState, LexicalEditor } from 'lexical'
+import { $getRoot, $getSelection, LexicalEditor } from 'lexical'
 import { Suggestion } from 'lib/models/suggestions'
 import { replaceAll } from 'lib/utils/string'
 import { API_URL } from 'lib/constants'
@@ -11,10 +11,10 @@ import { checkResponseError } from 'lib/utils/fetch'
 
 export type InputState = 'loading' | 'disabled' | 'send' | 'interrupt'
 
-const newInitiatedChatId = 'new-initiated-chat'
-
 type ChatStore = {
   chats: Chat[]
+  totalChats: number
+  chatsOffset: number
   currentChatId: string
   currentChatMessages: ChatMessage[]
   loadingMessages: boolean
@@ -22,6 +22,7 @@ type ChatStore = {
   suggestions: Suggestion[]
   inputState: Map<string, InputState>
   setChatEditor: (input: LexicalEditor) => void
+  setChatInput: (input: string) => void
   setChats: (chats: Chat[]) => void
   setInputState: (id: string, state: InputState) => void
   updateDisabledState: (id: string) => void
@@ -41,12 +42,13 @@ type ChatStore = {
   addChat: (chat: Chat) => void
   updateChat: (id: string, chat: Chat) => void
   removeChat: (id: string) => void
-  updateChats: () => void
-  updateChatMessages: () => void
+  fetchChats: () => void
+  fetchChatMessages: () => void
   deleteChat: (id: string) => void
   removeTemporaryMessages: () => void
-  updateSuggestions: () => void
+  fetchSuggestions: () => void
   handleStreamEnd: (chatId: string) => void
+  fetchChatUpdate: (id: string) => void
   handleResponse: (
     response: Response,
     tempChatId: string,
@@ -56,6 +58,8 @@ type ChatStore = {
 
 export const useChatStore = create<ChatStore>()((set, get) => ({
   chats: [],
+  totalChats: 0,
+  chatsOffset: 0,
   currentChatId: '',
   currentChatMessages: [],
   loadingMessages: false,
@@ -68,6 +72,17 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     return set({ inputState: inputState })
   },
   setChatEditor: (input) => set({ chatEditor: input }),
+  setChatInput: (input) => {
+    const editor = get().chatEditor
+    editor?.update(() => {
+      const root = $getRoot()
+      root.clear()
+      const selection = $getSelection()
+      if (selection) {
+        selection.insertText(input)
+      }
+    })
+  },
   setChats: (chats) =>
     set({
       chats: chats?.sort(
@@ -81,7 +96,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   setCurrentChatId: (currentChatId, updateMessages = true) => {
     set({ currentChatId: currentChatId })
     if (updateMessages !== false) {
-      get().updateChatMessages()
+      get().fetchChatMessages()
     }
     if (get().inputState.get(currentChatId) === undefined) {
       get().setInputState(currentChatId, 'disabled')
@@ -91,7 +106,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     if (!get().chats.find((c) => c.id === chat.id)) {
       set((state) => {
         state.chats = [chat, ...state.chats]
-        return { chats: state.chats }
+        return {
+          chats: state.chats,
+          totalChats: state.totalChats + 1,
+          chatsOffset: state.chatsOffset + 1,
+        }
       })
     }
   },
@@ -154,24 +173,48 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       return { currentChatMessages: [...state.currentChatMessages] }
     })
   },
-  updateChats: async () => {
+  fetchChats: async () => {
     try {
-      const response = await fetch(`${API_URL}/v3/orgs/${getAccount()}/chat/`, {
-        credentials: 'include',
-      })
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/chat/?sort_by=last_modified_at&limit=20&offset=${get().chatsOffset}&sort_ascending=false`,
+        {
+          credentials: 'include',
+        },
+      )
       checkResponseError(response)
       const data = await response.json()
+      const newChats: Chat[] = data.data.filter(
+        (chat: Chat) => !get().chats.find((c) => c.id === chat.id),
+      )
+      const chats = [...get().chats, ...newChats].sort(
+        (a: Chat, b: Chat) =>
+          Date.parse(b.last_modified_at) - Date.parse(a.last_modified_at),
+      )
       set({
-        chats: data.data?.sort(
-          (a: Chat, b: Chat) =>
-            Date.parse(b.last_modified_at) - Date.parse(a.last_modified_at),
-        ),
+        totalChats: data.total,
+        chatsOffset: chats.length,
+        chats: chats,
       })
     } catch (e: any) {
       console.error('Failed to fetch chats:', e.message)
     }
   },
-  updateChatMessages: async () => {
+  fetchChatUpdate: async (id) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/chat/${id}`,
+        {
+          credentials: 'include',
+        },
+      )
+      checkResponseError(response)
+      const data = await response.json()
+      get().updateChat(id, data)
+    } catch (e: any) {
+      console.error('Failed to fetch chat update:', e.message)
+    }
+  },
+  fetchChatMessages: async () => {
     const state = useChatStore.getState()
     if (!state.chats.find((chat) => chat.id === state.currentChatId)) {
       set({ currentChatMessages: [] })
@@ -208,10 +251,10 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         get().createNewChat()
       }
     } catch (e: any) {
-      console.log(e.message)
+      console.error(e.message)
     }
   },
-  updateSuggestions: async () => {
+  fetchSuggestions: async () => {
     try {
       const response = await fetch(
         `${API_URL}/v3/orgs/${getAccount()}/data_assets/suggestions`,
@@ -317,7 +360,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   handleStreamEnd: async (chatId: string) => {
     get().setInputState(chatId, 'send')
     get().removeTemporaryMessages()
-    get().updateChats()
+    get().fetchChatUpdate(chatId)
     if (chatId === get().currentChatId) {
       set({
         currentChatMessages: get()
@@ -347,7 +390,6 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       const { done, value } = await reader.read()
 
       if (done) {
-        console.log('Stream closed')
         get().handleStreamEnd(thisChatId)
         break
       }
@@ -387,9 +429,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
             )
             const data = await response.json()
             data.name ??= 'Untitled Chat'
-            get().removeChat(tempChatId)
             get().setInputState(message.chat_id, currentInputState ?? 'send')
-            get().addChat(data)
+            get().updateChat(tempChatId, data)
 
             if (get().currentChatId === tempChatId) {
               get().setCurrentChatId(message.chat_id, false)
@@ -402,14 +443,6 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
             message.chat_id !== get().currentChatId &&
             get().currentChatId !== tempChatId
           ) {
-            // console.log(
-            //   'Skipping message',
-            //   message,
-            //   get().currentChatId,
-            //   tempChatId,
-            //   get().currentChatId === tempChatId,
-            //   message.chat_id,
-            // )
             continue
           }
 

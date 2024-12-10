@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { ReactComponent as Add } from 'lib/icons/add.svg'
 import { Button } from 'components/Button'
 import { cn } from 'lib/utils'

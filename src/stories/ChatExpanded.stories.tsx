@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Button } from 'components/Button'
 import ChatView from 'components/chat/ChatView'
-import ErrorAlert from 'components/ErrorAlert'
 
 const meta = {
   title: 'Chat/ChatExpanded',

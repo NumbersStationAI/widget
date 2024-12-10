@@ -2,9 +2,38 @@
   const script = document.currentScript
   const origin = script.src.split('/').slice(0, -1).join('/')
 
+  const WIDGET_ANIMATION = '0.2s ease-in'
+  const BUTTON_ANIMATION = '0.15s ease-in'
+
   const loadWidget = () => {
     const widget = document.createElement('div')
-    let expanded = false
+    let expanded = script.getAttribute('data-expanded') === 'true'
+
+    const account = script.getAttribute('data-account')
+    const showOpenInFullButton = script.getAttribute(
+      'data-show-open-in-full-button',
+    )
+    const buttonColor = script.getAttribute('data-button-color')
+    const showBorder = script.getAttribute('data-show-border') ?? 'true'
+    const showShadow = script.getAttribute('data-show-shadow') ?? 'true'
+    const borderRadius = script.getAttribute('data-border-radius') ?? '12px'
+    const showMinimizeButton =
+      script.getAttribute('data-show-minimize-button') ?? 'true'
+    const showExpandButton =
+      script.getAttribute('data-show-expand-button') ?? 'true'
+    const args = {
+      account: account,
+      showOpenInFullButton: showOpenInFullButton,
+      showBorder: showBorder,
+      showMinimizeButton: showMinimizeButton,
+      showExpandButton: showExpandButton,
+      expanded: expanded.toString(),
+      parentParams: encodeURIComponent(window.location.search),
+    }
+    const searchString = Object.keys(args)
+      .map((key) => key + '=' + args[key])
+      .join('&')
+    const widgetUrl = `${origin}?${searchString}`
 
     const widgetStyle = widget.style
     widgetStyle.boxSizing = 'border-box'
@@ -14,7 +43,6 @@
     widgetStyle.bottom = '0rem'
     widgetStyle.right = '0rem'
     widgetStyle.overflow = 'visible'
-    // widgetStyle.backgroundColor = "red";
 
     const iframe = document.createElement('iframe')
     const button = document.createElement('button')
@@ -25,11 +53,11 @@
     buttonStyle.alignItems = 'center'
     buttonStyle.width = '4rem'
     buttonStyle.height = '4rem'
-    buttonStyle.background = '#171717'
+    buttonStyle.background = buttonColor ?? '#171717'
     buttonStyle.position = 'absolute'
     buttonStyle.borderRadius = '100%'
     buttonStyle.bottom = '1rem'
-    buttonStyle.transition = '0.15s ease-in'
+    buttonStyle.transition = BUTTON_ANIMATION
     buttonStyle.right = '1rem'
     buttonStyle.cursor = 'pointer'
 
@@ -45,8 +73,10 @@
 `
 
     const iframeStyle = iframe.style
+    iframe.src = widgetUrl
+    iframe.allow = 'clipboard-read; clipboard-write'
     iframe.allowTransparency = 'true'
-    iframe.border = '0'
+    iframe.border = 'border: 4px solid black'
     iframeStyle.display = 'block'
     iframeStyle.boxSizing = 'borderBox'
     iframeStyle.position = 'absolute'
@@ -54,28 +84,22 @@
     iframeStyle.bottom = '0rem'
     iframeStyle.border = 0
     iframeStyle.margin = 0
-
     iframeStyle.width = '0rem'
     iframeStyle.height = '0rem'
-    iframeStyle.transition = '0.15s ease-in'
+    iframeStyle.transition = WIDGET_ANIMATION
     iframeStyle.marginRight = '1rem'
     iframeStyle.marginBottom = '1rem'
     iframeStyle.overflow = 'hidden'
     iframeStyle.backgroundColor = 'transparent'
-    iframeStyle.boxShadow = 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px'
-    iframeStyle.borderRadius = '12px'
+    iframeStyle.boxShadow =
+      showShadow === 'true' && 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px'
+    iframeStyle.borderRadius = borderRadius ?? '12px'
     iframeStyle.background = 'white'
-    // iframeStyle.shadow = "rgba(149, 157, 165, 0.2) 0px 8px 24px";
-    // iframeStyle.boxShadow = "box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;"
 
     widget.appendChild(button)
     widget.appendChild(iframe)
 
-    const greeting = script.getAttribute('data-greeting')
     const hide = () => {
-      // shrink(iframe, 1000);
-      // iframeStyle.display = "none";
-
       iframeStyle.height = '0rem'
       iframeStyle.width = '0rem'
       iframeStyle.opacity = 0
@@ -121,9 +145,40 @@
       },
       show: show,
       hide: hide,
+      setShowOpenInFullButton: (value) => {
+        iframe.contentWindow.postMessage(
+          {
+            setShowOpenInFullButton: value,
+          },
+          origin,
+        )
+      },
+      setChatInput: (value) => {
+        iframe.contentWindow.postMessage(
+          {
+            setChatInput: value,
+          },
+          origin,
+        )
+      },
+      setButtonColor: (value) => {
+        buttonStyle.background = value
+      },
+
+      toggleSidebar: () => {
+        iframe.contentWindow.postMessage(
+          {
+            toggleSidebar: true,
+          },
+          origin,
+        )
+      },
+      expand: () => {
+        expanded = true
+        show()
+      },
       toggle: () => {
         const width = window.getComputedStyle(iframe, null).width
-        console.log('width', width)
         if (width === '0px') {
           show()
         } else {
@@ -168,7 +223,7 @@
       } else iframeStyle.transition = 'none'
 
       timer = setTimeout(() => {
-        iframeStyle.transition = '0.15s ease-in'
+        iframeStyle.transition = WIDGET_ANIMATION
         timer = null
       }, 100)
     })
@@ -184,12 +239,6 @@
     button.addEventListener('mouseout', () => {
       buttonStyle.scale = '1'
     })
-
-    const account = script.getAttribute('data-account')
-    const widgetUrl = `${origin}?account=${account}`
-
-    iframe.src = widgetUrl
-    iframe.allow = 'clipboard-read; clipboard-write'
 
     document.body.appendChild(widget)
   }

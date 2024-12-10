@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import ErrorAlert from 'components/ErrorAlert'
 import Spinner from 'components/Spinner'
 
 const meta = {

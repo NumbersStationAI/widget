@@ -1,7 +1,7 @@
 import { Button } from 'components/Button'
 import { useBeautifulMentions } from 'lexical-beautiful-mentions'
 import { getDataAssetTypeIcon } from 'lib/utils/dataAsset'
-import { Layers, LayoutGrid, NotebookText, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useReducer } from 'react'
 
 const MentionsBar: React.FC = () => {

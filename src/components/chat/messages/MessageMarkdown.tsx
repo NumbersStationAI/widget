@@ -13,7 +13,7 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
   return (
     <Markdown
       className={cn(
-        'prose prose-sm prose-neutral max-w-none text-[1rem] text-primary prose-blockquote:font-medium prose-blockquote:not-italic prose-strong:font-bold prose-pre:rounded-md prose-pre:p-0',
+        'prose prose-sm prose-neutral max-w-none text-primary prose-blockquote:font-medium prose-blockquote:not-italic prose-strong:font-bold prose-pre:rounded-md prose-pre:p-0',
         className,
       )}
     >

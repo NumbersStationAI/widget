@@ -1,7 +1,3 @@
-import TableauReport from 'tableau-react'
-import useSize from '@react-hook/size'
-import { HTMLAttributes, useRef } from 'react'
-
 interface TableauProps {
   id?: string
   src: string | undefined
@@ -22,9 +18,6 @@ interface Props {
   url?: string
 }
 const Tableau: React.FC<Props> = ({ url }) => {
-  const target = useRef(null)
-  const [width, height] = useSize(target)
-
   return (
     <div className='h-fit w-full'>
       <tableau-viz id='tableauViz' src={url} hide-tabs></tableau-viz>
@@ -33,11 +26,3 @@ const Tableau: React.FC<Props> = ({ url }) => {
 }
 
 export default Tableau
-
-// <TableauReport
-//         options={{
-//           hideTabs: true,
-//         }}
-//         url={url}
-//       />
-//

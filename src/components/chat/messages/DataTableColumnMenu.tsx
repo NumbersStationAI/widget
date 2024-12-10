@@ -22,6 +22,7 @@ interface DataTableColumnMenuProps {
   sort: ColumnSort | undefined
   sortedColumns: ColumnSort[]
   setSortedColumns: (columns: ColumnSort[]) => void
+  setLoadingType: () => void
 }
 
 export interface ColumnSort {
@@ -35,10 +36,11 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
   sort,
   sortedColumns,
   setSortedColumns,
+  setLoadingType,
 }) => {
   const setColumnSorting = useCallback(
     (column: string, direction: 'asc' | 'desc') => {
-      console.log('setColumnSorting', column, direction)
+      setLoadingType()
       const index = sortedColumns.findIndex((c) => c.column === column)
       if (index !== -1) {
         const newColumns = [...sortedColumns]
@@ -48,11 +50,12 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
         setSortedColumns([...sortedColumns, { column, direction }])
       }
     },
-    [sortedColumns, setSortedColumns],
+    [setLoadingType, sortedColumns, setSortedColumns],
   )
 
   const clearColumnSorting = useCallback(
     (column: string) => {
+      setLoadingType()
       const index = sortedColumns.findIndex((c) => c.column === column)
       if (index !== -1) {
         const newColumns = [...sortedColumns]
@@ -60,7 +63,7 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
         setSortedColumns(newColumns)
       }
     },
-    [sortedColumns],
+    [setLoadingType, setSortedColumns, sortedColumns],
   )
 
   return (

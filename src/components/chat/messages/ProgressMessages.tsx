@@ -1,8 +1,7 @@
 import { ChatMessage } from 'lib/models/message'
 import MessageMarkdown from './MessageMarkdown'
 import Spinner from 'components/Spinner'
-import { Button } from 'components/Button'
-import { Check, CheckIcon, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface ProgressMessagesProps {
@@ -47,7 +46,7 @@ const ProgressMessages: React.FC<ProgressMessagesProps> = ({ messages }) => {
           >
             <Check className='h-[24px] w-[24px] flex-shrink-0 p-1' />
             {message.markdown && (
-              <MessageMarkdown className='!text-[#525252]'>
+              <MessageMarkdown className='!text-sm !text-[#525252]'>
                 {message.markdown}
               </MessageMarkdown>
             )}

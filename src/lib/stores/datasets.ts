@@ -1,20 +1,19 @@
 import { Dataset } from 'lib/models/dataset'
-import { User } from 'lib/models/user'
 import { create } from 'zustand'
-import { getAccount, useUserStore } from './user'
+import { getAccount } from './user'
 import { API_URL } from 'lib/constants'
 import { checkResponseError } from 'lib/utils/fetch'
 
 type DatasetStore = {
   datasets: Dataset[]
   datasetsLoading: boolean
-  updateDatasets: () => void
+  fetchDataAssets: () => void
 }
 
 export const useDatasetStore = create<DatasetStore>()((set) => ({
   datasets: [],
   datasetsLoading: false,
-  updateDatasets: async () => {
+  fetchDataAssets: async () => {
     set({ datasetsLoading: true })
     try {
       const response = await fetch(

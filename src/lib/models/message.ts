@@ -23,4 +23,5 @@ export interface ChatMessage {
   semantic_layer_view?: any
   vega_spec?: any
   streaming?: boolean
+  is_positive_feedback?: boolean
 }

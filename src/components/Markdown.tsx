@@ -43,9 +43,7 @@ const HighlightedCode: React.FC<HighlightedCodeProps> = ({
 }
 
 const WrapperPre: React.FC<{ children: string }> = ({ children }) => {
-  return (
-    <pre className='not-prose w-full overflow-x-auto px-6 py-2'>{children}</pre>
-  )
+  return <pre className='not-prose w-min-fit px-6 py-2'>{children}</pre>
 }
 
 const Link: React.FC<{ href: string; children: string }> = ({

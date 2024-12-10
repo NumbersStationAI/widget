@@ -20,12 +20,11 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion }) => {
     >
       <div className='flex flex-col gap-2'>
         <p className='text-left text-[1rem]'>{suggestion.prompt}</p>
-        <p className='w-fit rounded-sm bg-[#EFF5FF] px-1 text-[#3B82F6]'>
-          {' '}
+        <p className='w-fit break-all rounded-sm bg-[#EFF5FF] px-1 text-left text-[#3B82F6]'>
           {suggestion.asset_name}
         </p>
       </div>
-      <ChevronRight />
+      <ChevronRight className='h-4 w-4 flex-shrink-0' />
     </button>
   )
 }

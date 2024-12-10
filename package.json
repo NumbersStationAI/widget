@@ -1,6 +1,6 @@
 {
   "name": "example-chat-widget",
-  "version": "0.1.0",
+  "version": "171.1.0",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -35,7 +35,7 @@
     "lucide-react": "^0.453.0",
     "markdown-to-jsx": "^7.5.0",
     "markdown-to-text": "^0.1.1",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.9",
     "next-themes": "^0.4.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -55,7 +55,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "storybook": "storybook dev -p 6006",
@@ -84,14 +84,17 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^1.9.0",
+    "@eslint/compat": "^1.2.4",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.16.0",
     "@storybook/addon-essentials": "^8.3.6",
     "@storybook/addon-interactions": "^8.3.6",
     "@storybook/addon-links": "^8.3.6",
     "@storybook/addon-onboarding": "^8.3.6",
     "@storybook/blocks": "^8.3.6",
-    "@storybook/preset-create-react-app": "^8.3.6",
+    "@storybook/preset-create-react-app": "^8.4.7",
     "@storybook/react": "^8.3.6",
-    "@storybook/react-webpack5": "^8.3.6",
+    "@storybook/react-webpack5": "^8.4.7",
     "@storybook/test": "^8.3.6",
     "@tailwindcss/typography": "^0.5.15",
     "@types/autosize": "^4.0.3",
@@ -103,13 +106,26 @@
     "@types/react-mentions": "^4.4.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint-plugin-storybook": "^0.10.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "globals": "^15.13.0",
     "prettier": "3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "prop-types": "^15.8.1",
-    "storybook": "^8.3.6",
+    "storybook": "^8.4.7",
     "tailwind-scrollbar": "^3.1.0",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
     "webpack": "^5.95.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@8.6.12",
+  "pnpm": {
+    "overrides": {
+      "express": ">=4.21.2",
+      "resolve-url-loader": ">=5.0.0",
+      "@svgr/webpack": ">=8.1.0"
+    }
   }
 }
