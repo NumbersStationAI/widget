@@ -2,7 +2,7 @@ import { TooltipButton } from 'components/Button'
 import ErrorAlert from 'components/ErrorAlert'
 import { Download, RectangleHorizontal, Square } from 'lucide-react'
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import vegaEmbed, { Result } from 'vega-embed'
+import vegaEmbed, { Result, VisualizationSpec } from 'vega-embed'
 import CodeSheet from './CodeSheet'
 import { useLayoutStore } from 'lib/stores/layout'
 import { toast } from 'sonner'
@@ -21,10 +21,14 @@ const VegaEmbed = memo(({ spec }: { spec: string }) => {
   useEffect(() => {
     async function render(el: HTMLElement) {
       try {
+        ;(spec as VisualizationSpec)['autosize'] = {
+          type: 'fit-x',
+          contains: 'padding',
+        }
         setEmbed(
           await vegaEmbed(el, spec, {
             actions: false,
-            width: embedSize[0] - 120,
+            width: embedSize[0] - 20,
           }),
         )
       } catch (e) {

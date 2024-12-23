@@ -1,42 +1,25 @@
+import { squircle } from 'ldrs'
+import { useEffect } from 'react'
+
 interface Props {
   className?: string
-  size?: string
+  size?: number
 }
 
-const Spinner: React.FC<Props> = ({ className, size = '48' }) => {
+const Spinner: React.FC<Props> = ({ className, size = 1 }) => {
+  useEffect(() => {
+    squircle.register()
+  }, [])
+
   return (
-    <svg
-      xmlns='http://www.w3.org/2000/svg'
-      width={size}
-      height={size}
-      viewBox={`0 0 48 48`}
-    >
-      <rect
-        x='2'
-        y='2'
-        height='75%'
-        width='75%'
-        rx='14'
-        ry='14'
-        strokeWidth='4'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        stroke='currentColor'
-        className='animate-spinner fill-transparent [stroke-dasharray:30,90]'
-      />
-      <rect
-        x='2'
-        y='2'
-        height='75%'
-        width='75%'
-        rx='14'
-        ry='14'
-        strokeWidth='4'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='fill-transparent stroke-primary/10'
-      />
-    </svg>
+    <l-squircle
+      size={size * 40}
+      stroke={4.0 * size}
+      stroke-length='0.15'
+      bg-opacity='0.1'
+      speed='0.5'
+      color='black'
+    ></l-squircle>
   )
 }
 

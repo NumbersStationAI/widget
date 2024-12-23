@@ -43,8 +43,8 @@ const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
     <div className='flex items-center gap-2 py-2'>
       <div className='flex-1' />
       {isRefreshing ? (
-        <div className='flex items-center gap-2 leading-none'>
-          <Spinner size='18' />
+        <div className='flex items-center gap-3 text-sm leading-none text-primary'>
+          <Spinner size={0.4} />
           Fetching data...
         </div>
       ) : (

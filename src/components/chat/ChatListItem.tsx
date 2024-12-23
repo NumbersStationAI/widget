@@ -26,24 +26,25 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
   return (
     <li
       key={index}
-      className={`relative h-9 px-3 ${
+      className={`relative h-9 pl-3 ${
         currentChatId === chat.id || open
           ? 'bg-hover text-foreground'
           : 'text-foreground/75'
       } group flex items-center justify-between rounded-md text-left font-medium hover:bg-hover`}
     >
       <button
-        className={`h-full flex-1 text-start text-sm`}
+        className={`relative h-full grow overflow-hidden whitespace-nowrap text-start text-sm`}
         onClick={() => {
           setCurrentChatId(chat.id)
           onChatSelected(chat)
         }}
       >
-        <p className='line-clamp-1 overflow-hidden'>{chat.name}</p>
+        {chat.name}
+        <div className='absolute bottom-0 right-0 top-0 w-8 bg-gradient-to-l from-white from-0% to-transparent group-hover:from-hover'></div>
       </button>
       <DropdownMenu open={open} onOpenChange={(value) => setOpen(value)}>
         <DropdownMenuTrigger
-          className={`flex min-h-6 items-center justify-center rounded-md bg-white ${open ? 'w-6' : 'w-0'} group-hover:w-6 group-hover:min-w-6`}
+          className={`flex min-h-6 items-center justify-center rounded-md bg-white ${open ? 'w-6' : 'w-0'} group-hover:mr-2 group-hover:w-6 group-hover:min-w-6`}
         >
           <Ellipsis className='h-4 w-4' />
         </DropdownMenuTrigger>

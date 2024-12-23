@@ -3,13 +3,22 @@ import { ChatMessage } from 'lib/models/message'
 import ChatMessageWidget from './ChatMessage'
 import { useEffect, useState } from 'react'
 import ProgressMessages from './ProgressMessages'
-import { TooltipButton } from 'components/Button'
-import { Copy, Link2, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { Button, TooltipButton } from 'components/Button'
+import {
+  Copy,
+  Link2,
+  ThumbsDown,
+  ThumbsUp,
+  CircleCheckBig,
+  Check,
+} from 'lucide-react'
 import removeMarkdown from 'markdown-to-text'
 import { toast } from 'sonner'
-import { API_URL, APP_URL } from 'lib/constants'
-import { getAccount } from 'lib/stores/user'
+import { APP_URL, API_URL } from 'lib/constants'
+import { getAccount, useUserStore } from 'lib/stores/user'
 import { useChatStore } from 'lib/stores/chat'
+import copy from 'copy-to-clipboard'
+import { getAuthHeaders } from 'lib/utils/token'
 
 interface MessageGroupProps {
   messages: ChatMessage[]
@@ -31,6 +40,12 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
   const [isPositiveFeedback, setIsPositiveFeedback] = useState<boolean | null>(
     userMessage?.is_positive_feedback ?? null,
   )
+  const [isPositiveAdminFeedback, setIsPositiveAdminFeedback] = useState<
+    boolean | null
+  >(userMessage?.is_positive_admin_feedback ?? null)
+  const { user, showAdminFeedbackButton } = useUserStore()
+  const currentAccount = getAccount()
+
   useEffect(() => {
     const progressMessages = messages.filter(
       (message) =>
@@ -44,7 +59,6 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
     )
     setProgressMessages(progressMessages)
     setChatMessages(chatMessages)
-    console.log('usermessage', userMessage?.id, userMessage?.is_positive_feedback)
   }, [messages])
 
   const copyToClipboard = () => {
@@ -52,15 +66,20 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
     for (const chatMessage of chatMessages) {
       message += removeMarkdown(chatMessage.markdown) + '\n'
     }
-    navigator.clipboard.writeText(message)
-    toast('Message copied to clipboard')
+    if (copy(message)) {
+      toast('Message copied to clipboard')
+    } else {
+      toast('Failed to copy to clipboard')
+    }
   }
 
   const copyLinkToClipboard = () => {
-    navigator.clipboard.writeText(
-      `${APP_URL}/${getAccount()}/chats/${useChatStore.getState().currentChatId}#${messages[messages.length - 1].id}`,
-    )
-    toast('Link copied to clipboard')
+    const link = `${APP_URL}/${getAccount()}/widget/${useChatStore.getState().currentChatId}#${messages[messages.length - 1].id}`
+    if (copy(link)) {
+      toast('Link copied to clipboard')
+    } else {
+      toast('Failed to copy to clipboard')
+    }
   }
 
   const setFeedback = (isPositive: boolean) => {
@@ -76,6 +95,7 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             is_positive_feedback: feedback,
@@ -86,6 +106,35 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
       console.error(e)
     }
   }
+
+  const setAdminFeedback = (isPositive: true | null) => {
+    if (!userMessage) return
+    setIsPositiveAdminFeedback(isPositive)
+    try {
+      fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/messages/${userMessage.id}/admin_feedback`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ is_positive_admin_feedback: isPositive }),
+        },
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  useEffect(() => {
+    setIsPositiveFeedback(userMessage?.is_positive_feedback ?? null)
+    setIsPositiveAdminFeedback(userMessage?.is_positive_admin_feedback ?? null)
+  }, [
+    userMessage?.is_positive_feedback,
+    userMessage?.is_positive_admin_feedback,
+  ])
 
   return (
     <div
@@ -102,13 +151,13 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
           return (
             <ChatMessageWidget
               message={message}
-              key={`${message.chat_id}-${message.id}-${message.response_index}`}
+              key={`${message.id}-${message.response_index}`}
               groupIndex={index}
             />
           )
         })}
         {sender === 'ai' && !streaming && showCopyActions && (
-          <div className='mt-2 flex gap-2'>
+          <div className='mt-2 flex items-center gap-2.5'>
             <TooltipButton
               tooltip='Copy'
               variant='ghost'
@@ -147,6 +196,33 @@ const MessageGroup: React.FC<MessageGroupProps> = ({
                     className={`${isPositiveFeedback === false ? 'fill-black' : ''}`}
                   />
                 </TooltipButton>
+                {user?.role === 'ADMIN' && showAdminFeedbackButton && (
+                  <>
+                    <div className='h-6 w-px bg-neutral-200' />
+                    <span className='text-sm font-medium'>Admin</span>
+                    {isPositiveAdminFeedback === true ? (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => setAdminFeedback(null)}
+                        className='h-8 text-green-600'
+                      >
+                        <CircleCheckBig className='h-4 w-4' />
+                        Feedback
+                      </Button>
+                    ) : (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => setAdminFeedback(true)}
+                        className='h-8'
+                      >
+                        <Check className='h-4 w-4' />
+                        Save as feedback
+                      </Button>
+                    )}
+                  </>
+                )}
               </>
             )}
           </div>

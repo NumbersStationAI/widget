@@ -1,8 +1,8 @@
 import { TooltipButton } from 'components/Button'
 import { Popover, PopoverContent, PopoverTrigger } from 'components/Popover'
 import { useBeautifulMentions } from 'lexical-beautiful-mentions'
-import { AtSign } from 'lucide-react'
 import { MentionsMenu, MentionsMenuItem } from './MentionsMenu'
+import FeatherIcon from 'feather-icons-react'
 
 interface ChatInputToolbarProps {
   currentMentions: any[]
@@ -23,7 +23,7 @@ const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
           onClick={() => {}}
           tooltip='Add context'
         >
-          <AtSign />
+          <FeatherIcon icon="at-sign"/>
         </TooltipButton>
       </PopoverTrigger>
       <PopoverContent className='mb-3 w-fit p-2'>

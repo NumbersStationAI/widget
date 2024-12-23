@@ -24,4 +24,5 @@ export interface ChatMessage {
   vega_spec?: any
   streaming?: boolean
   is_positive_feedback?: boolean
+  is_positive_admin_feedback?: boolean
 }

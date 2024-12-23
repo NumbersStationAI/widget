@@ -22,10 +22,9 @@ npm run start
 npm run build
 ```
 
-- The build files should now be in `build` folder, ready to be deployed aand served. This includes
+- The build files should now be in `build` folder, ready to be deployed and served. This includes
   - `index.html` The entry point for the react app
-  - `loader.js` The script that is used to load the react widget in the target webiste
-  - `widgetApi.js` The script that loads the js api to be used in the target website
+  - `loader.js` The script that is used to load the react widget in the target website
 
 ## Documentation
 

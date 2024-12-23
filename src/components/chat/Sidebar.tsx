@@ -11,6 +11,8 @@ import { getAccount } from 'lib/stores/user'
 import { APP_URL } from 'lib/constants'
 import ChatListItem from './ChatListItem'
 import { useCustomizationStore } from 'lib/stores/customization'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import Spinner from 'components/Spinner'
 
 interface Props {
   onChatSelected: (chat: Chat) => void
@@ -29,16 +31,30 @@ const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
           Analytics Copilot
         </h1>
         <div className='flex-1' />
-        <div className='w-0 opacity-0 transition-all group-hover/sidebar:w-6 group-hover/sidebar:opacity-100'>
+        <div className='w-6 scale-0 opacity-0 transition-opacity group-hover/sidebar:scale-100 group-hover/sidebar:opacity-100'>
           <SidebarButton />
         </div>
       </div>
       <div className='w-full px-4'>
         <NewChatButton expanded className='h-10 w-full' />
       </div>
-      <div className='flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-2'>
+      <div
+        className='flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-2'
+        id='scrollableDiv'
+      >
         <h2 className='px-3 text-xs font-medium'>Recent</h2>
-        <ul className='flex flex-col gap-2'>
+        <InfiniteScroll
+          dataLength={chats.length}
+          next={fetchChats}
+          hasMore={totalChats > chatsOffset}
+          loader={
+            <div className='flex w-full justify-center'>
+              <Spinner size={0.5} />
+            </div>
+          }
+          className='flex flex-col gap-2'
+          scrollableTarget='scrollableDiv'
+        >
           {chats.map((chat, index) => (
             <ChatListItem
               key={chat.id}
@@ -47,21 +63,12 @@ const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
               onChatSelected={onChatSelected}
             />
           ))}
-        </ul>
-        {totalChats > chatsOffset && (
-          <Button
-            onClick={fetchChats}
-            variant='outline'
-            className='h-10 w-full text-xs'
-          >
-            Load more
-          </Button>
-        )}
+        </InfiniteScroll>
       </div>
       <div className='h-fit px-4'>
         {showOpenInFullButton && (
           <a
-            href={`${APP_URL}/${getAccount()}/chats/${currentChatId}`}
+            href={`${APP_URL}/${getAccount()}/widget/${currentChatId}`}
             target='_blank'
             rel='noreferrer'
             className='!no-underline'

@@ -8,6 +8,7 @@ import { Suggestion } from 'lib/models/suggestions'
 import { replaceAll } from 'lib/utils/string'
 import { API_URL } from 'lib/constants'
 import { checkResponseError } from 'lib/utils/fetch'
+import { getAuthHeaders } from 'lib/utils/token'
 
 export type InputState = 'loading' | 'disabled' | 'send' | 'interrupt'
 
@@ -38,14 +39,14 @@ type ChatStore = {
   sendMessage: (message: string) => void
   addChatMessage: (message: ChatMessage) => void
   removeChatMessage: (id: string) => void
-  removeLoadingMessage: () => void
+  removeLoadingMessage: (chatId: string) => void
   addChat: (chat: Chat) => void
   updateChat: (id: string, chat: Chat) => void
   removeChat: (id: string) => void
   fetchChats: () => void
   fetchChatMessages: () => void
   deleteChat: (id: string) => void
-  removeTemporaryMessages: () => void
+  removeTemporaryMessages: (chatId: string) => void
   fetchSuggestions: () => void
   handleStreamEnd: (chatId: string) => void
   fetchChatUpdate: (id: string) => void
@@ -101,6 +102,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     if (get().inputState.get(currentChatId) === undefined) {
       get().setInputState(currentChatId, 'disabled')
     }
+    window.parent.postMessage({ currentChatId }, '*')
   },
   addChat: (chat) => {
     if (!get().chats.find((c) => c.id === chat.id)) {
@@ -150,10 +152,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       return { currentChatMessages: state.currentChatMessages }
     })
   },
-  removeLoadingMessage: () => {
+  removeLoadingMessage: (chatId) => {
     set((state) => {
       state.currentChatMessages = state.currentChatMessages?.filter(
-        (message) => message.render_type !== 'LOADING',
+        (message) =>
+          message.render_type !== 'LOADING' || message.chat_id !== chatId,
       )
       return { currentChatMessages: state.currentChatMessages }
     })
@@ -179,6 +182,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         `${API_URL}/v3/orgs/${getAccount()}/chat/?sort_by=last_modified_at&limit=20&offset=${get().chatsOffset}&sort_ascending=false`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       checkResponseError(response)
@@ -205,6 +209,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         `${API_URL}/v3/orgs/${getAccount()}/chat/${id}`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       checkResponseError(response)
@@ -226,6 +231,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         `${API_URL}/v3/orgs/${getAccount()}/chat/${state.currentChatId}/messages?limit=1000`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       checkResponseError(response)
@@ -241,11 +247,16 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       await fetch(`${API_URL}/v3/orgs/${getAccount()}/chat/${id}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: getAuthHeaders(),
       })
       set((state) => {
         state.chats = state.chats.filter((chat) => chat.id !== id)
 
-        return { chats: state.chats }
+        return {
+          chats: state.chats,
+          totalChats: state.totalChats - 1,
+          offset: state.chatsOffset - 1,
+        }
       })
       if (get().currentChatId === id) {
         get().createNewChat()
@@ -260,6 +271,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         `${API_URL}/v3/orgs/${getAccount()}/data_assets/suggestions`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       checkResponseError(response)
@@ -269,10 +281,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       console.error('Failed to fetch account suggestions:', e.message)
     }
   },
-  removeTemporaryMessages: () => {
+  removeTemporaryMessages: (chatId: string) => {
     set((state) => {
       state.currentChatMessages = state.currentChatMessages?.filter(
-        (message) => message.render_type !== 'TEMPORARY',
+        (message) =>
+          message.render_type !== 'TEMPORARY' || message.chat_id !== chatId,
       )
       return { currentChatMessages: state.currentChatMessages }
     })
@@ -329,7 +342,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     if (currentChatId) {
       body['chat_id'] = currentChatId
     }
-    get().removeTemporaryMessages()
+    get().removeTemporaryMessages(currentChatId)
     if (get().currentChatId === '') {
       get().setInputState('', 'disabled')
       get().setCurrentChatId(tempChatId, false)
@@ -341,6 +354,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         created_at: new Date().toISOString(),
         creator_id: 'app',
       })
+    } else {
+      get().setInputState(get().currentChatId, 'interrupt')
     }
 
     const response = await fetch(
@@ -350,6 +365,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         body: JSON.stringify(body),
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         credentials: 'include',
       },
@@ -359,7 +375,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   },
   handleStreamEnd: async (chatId: string) => {
     get().setInputState(chatId, 'send')
-    get().removeTemporaryMessages()
+    get().removeTemporaryMessages(chatId)
     get().fetchChatUpdate(chatId)
     if (chatId === get().currentChatId) {
       set({
@@ -425,6 +441,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
               `${API_URL}/v3/orgs/${getAccount()}/chat/${message.chat_id}`,
               {
                 credentials: 'include',
+                headers: getAuthHeaders(),
               },
             )
             const data = await response.json()
@@ -437,6 +454,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
             }
 
             thisChatId = message.chat_id
+            get().setInputState(message.chat_id, 'interrupt')
           }
 
           if (
@@ -446,17 +464,11 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
             continue
           }
 
-          if (message.signal_type === 'NOT_ACCEPTING_INPUT') {
-            get().setInputState(message.chat_id, 'interrupt')
-          } else if (message.signal_type === 'REQUEST_INPUT') {
-            get().handleStreamEnd(message.chat_id)
-          }
-
           get().updateDisabledState(message.chat_id)
 
           if (message.sending_agent !== 'user') {
             if (!isMessageEmpty(message)) {
-              get().removeLoadingMessage()
+              get().removeLoadingMessage(message.chat_id)
             }
 
             message.streaming = true

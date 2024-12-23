@@ -12,8 +12,9 @@ import HideButton from './HideButton'
 import ChatInput from './input/ChatInput'
 import SidebarButton from './SidebarButton'
 import { useBreakpoint } from 'lib/hooks/tailwind'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useCustomizationStore } from 'lib/stores/customization'
+import { useLocalStorage } from 'usehooks-ts'
 
 const ChatView: React.FC = () => {
   const { showSidebar, setShowSidebar, expanded } = useLayoutStore()
@@ -21,10 +22,20 @@ const ChatView: React.FC = () => {
     useCustomizationStore()
   const [animateSidebar, setAnimateSidebar] = useState(true)
   const isDesktop = useBreakpoint('md')
+  const [sidebarWidth, setSidebarWidth] = useState(25)
+  const [isDragging, setIsDragging] = useState(false)
+  const [showSidebarLocalStorage, setShowSidebarLocalStorage] = useLocalStorage(
+    'sidebarWidth',
+    25,
+  )
 
   const showExpandedView = useMemo(() => {
     return isDesktop && expanded
   }, [isDesktop, expanded])
+
+  useEffect(() => {
+    setShowSidebarLocalStorage(sidebarWidth)
+  }, [sidebarWidth, setShowSidebarLocalStorage])
 
   return (
     <ResizablePanelGroup
@@ -32,7 +43,8 @@ const ChatView: React.FC = () => {
       className={`h-full w-full overflow-clip ${showWidgetBorder && 'border border-border/50'} bg-white`}
     >
       <ResizablePanel
-        defaultSize={25}
+        defaultSize={showSidebarLocalStorage}
+        onResize={(size) => setSidebarWidth(size)}
         className={`${showSidebar && showExpandedView ? 'min-w-[13rem] max-w-[32rem]' : 'w-0 max-w-0'} ${animateSidebar && 'transition-all'}`}
       >
         {showExpandedView ? (
@@ -53,11 +65,15 @@ const ChatView: React.FC = () => {
       </ResizablePanel>
       {showExpandedView && (
         <ResizableHandle
+          hitAreaMargins={{ coarse: 15, fine: 0 }}
+          className={`w-[11px] bg-clip-content px-[5px] hover:bg-[#A3A3A3] hover:px-[4px] ${isDragging ? 'bg-[#A3A3A3] px-[4px]' : ''}`}
           onDragging={(isDragging) => {
             if (isDragging) {
               setAnimateSidebar(false)
+              setIsDragging(true)
             } else {
               setAnimateSidebar(true)
+              setIsDragging(false)
             }
           }}
         />
@@ -65,20 +81,26 @@ const ChatView: React.FC = () => {
 
       <ResizablePanel
         defaultSize={75}
-        className='flex h-full w-full flex-col items-center justify-center overflow-clip pb-4 pt-2'
+        className='flex h-full w-full flex-col items-center justify-center overflow-clip pb-4'
       >
-        <div
-          className={`flex w-full items-center ${showExpandedView ? 'gap-2 px-6' : 'gap-1 pl-3 pr-4'} pb-2`}
-        >
-          {!showSidebar && <SidebarButton />}
-          <div className='h-10 flex-1' />
-          {(!showSidebar || !showExpandedView) && <NewChatButton expanded />}
-          {showExpandButton && <ExpandButton />}
-          {showMinimizeButton && <HideButton />}
-        </div>
+        {(showExpandButton ||
+          showMinimizeButton ||
+          !showSidebar ||
+          !showExpandedView ||
+          !showSidebar) && (
+          <div
+            className={`flex w-full items-center ${showExpandedView ? 'gap-2 px-6' : 'gap-1 pl-3 pr-4'} mt-2 pb-2`}
+          >
+            {!showSidebar && <SidebarButton />}
+            <div className='flex-1' />
+            {(!showSidebar || !showExpandedView) && <NewChatButton expanded />}
+            {showExpandButton && <ExpandButton />}
+            {showMinimizeButton && <HideButton />}
+          </div>
+        )}
         <MessageView />
         <div
-          className={`${showExpandedView ? '' : 'fixed bottom-4 flex w-full items-center justify-center px-4'}`}
+          className={`${showExpandedView ? 'flex w-full flex-col items-center px-4' : 'fixed bottom-4 flex w-full items-center justify-center px-4'}`}
         >
           <ChatInput />
         </div>

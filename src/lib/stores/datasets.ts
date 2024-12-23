@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { getAccount } from './user'
 import { API_URL } from 'lib/constants'
 import { checkResponseError } from 'lib/utils/fetch'
+import { getAuthHeaders } from 'lib/utils/token'
 
 type DatasetStore = {
   datasets: Dataset[]
@@ -20,6 +21,7 @@ export const useDatasetStore = create<DatasetStore>()((set) => ({
         `${API_URL}/v3/orgs/${getAccount()}/data_assets/`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       checkResponseError(response)
@@ -30,7 +32,6 @@ export const useDatasetStore = create<DatasetStore>()((set) => ({
         ),
       })
     } catch (e: any) {
-      // set({ datasets:  });
       console.error('Failed to fetch datasets:', e.message)
     }
     set({ datasetsLoading: false })

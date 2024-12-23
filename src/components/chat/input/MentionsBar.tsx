@@ -29,11 +29,11 @@ const MentionsBar: React.FC = () => {
 
         return (
           <div
-            className='mb-2 mr-2 flex select-none items-center gap-2 rounded-md border px-2 py-1 text-sm'
+            className='mb-2 mr-2 flex max-w-[320px] select-none items-center gap-2 rounded-md border px-2 py-1 text-sm'
             key={index}
           >
             <Icon className='max-h-3 min-h-3 min-w-3 max-w-3 text-foreground/70' />
-            {mention.value}
+            <p className='line-clamp-1'>{mention.value}</p>
             <Button
               className='h-4 w-4 items-center justify-center p-0'
               variant='ghost'

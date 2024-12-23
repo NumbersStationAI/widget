@@ -19,6 +19,7 @@ const MessageView: React.FC = () => {
   const { setViewportWidth } = useLayoutStore()
   const viewRef = useRef<HTMLDivElement>(null)
   const viewSize = useSize(viewRef)
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true)
 
   const isLastMessageUser = useCallback((): boolean => {
     return (
@@ -36,22 +37,27 @@ const MessageView: React.FC = () => {
     )
   }, [currentChatMessages])
 
-  const isScrollAtBottom = () => {
-    return viewRef.current
-      ? Math.abs(
-          viewRef.current.scrollHeight -
-            viewRef.current.scrollTop -
-            viewRef.current.clientHeight,
-        )
-      : 0 < 20
+  const scrollToBottom = () => {
+    viewRef.current?.scrollTo({
+      top: viewRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
   }
 
-  const scrollToBottom = () => {
-    viewRef.current?.scrollTo(0, viewRef.current.scrollHeight)
+  const handleScroll = () => {
+    if (!viewRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = viewRef.current
+    const isAtBottom = scrollHeight - scrollTop === clientHeight
+
+    if (isAtBottom) {
+      setIsAutoScrollEnabled(true)
+    } else {
+      setIsAutoScrollEnabled(false)
+    }
   }
 
   useEffect(() => {
-    if (isLastMessageUser() || isLastMessageLoading() || isScrollAtBottom()) {
+    if (isLastMessageUser() || isLastMessageLoading() || isAutoScrollEnabled) {
       scrollToBottom()
     }
     const tempMessageGroups: MessageGroup[] = []
@@ -76,7 +82,12 @@ const MessageView: React.FC = () => {
     })
 
     setMessageGroups([...tempMessageGroups])
-  }, [currentChatMessages, isLastMessageLoading, isLastMessageUser])
+  }, [
+    currentChatMessages,
+    isLastMessageLoading,
+    isLastMessageUser,
+    isAutoScrollEnabled,
+  ])
 
   useEffect(() => {
     setViewportWidth(viewSize[0])
@@ -85,6 +96,7 @@ const MessageView: React.FC = () => {
   return (
     <div
       ref={viewRef}
+      onScroll={handleScroll}
       className='relative flex min-h-[2rem] w-full flex-1 flex-col items-center overflow-y-auto overflow-x-hidden px-4'
     >
       {loadingMessages ? (
@@ -99,7 +111,7 @@ const MessageView: React.FC = () => {
             messageGroups.map((messageGroup, groupIndex) => {
               return (
                 <MessageGroupView
-                  key={messageGroup.messages[0].id ?? `${currentChatId}-${groupIndex}`}
+                  key={`${currentChatId}-${groupIndex}`}
                   messages={messageGroup.messages}
                   sender={messageGroup.sender}
                   streaming={messageGroup.streaming}
@@ -108,7 +120,7 @@ const MessageView: React.FC = () => {
               )
             })
           )}
-          <div className='min-h-[20vh] w-full' />
+          <div className='min-h-[80px] w-full' />
         </div>
       )}
     </div>

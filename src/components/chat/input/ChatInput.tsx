@@ -23,6 +23,7 @@ import { MentionsMenu, MentionsMenuItem } from './MentionsMenu'
 import SendButton from '../SendButton'
 import ChatInputToolbar from './ChatInputToolbar'
 import { API_URL } from 'lib/constants'
+import { getAuthHeaders } from 'lib/utils/token'
 
 const ChatInput: React.FC = () => {
   const [editor] = useLexicalComposerContext()
@@ -49,14 +50,17 @@ const ChatInput: React.FC = () => {
       {
         method: 'POST',
         credentials: 'include',
+        headers: getAuthHeaders()
       },
     )
-    removeLoadingMessage()
-  }, [removeLoadingMessage])
+    removeLoadingMessage(currentChatId)
+  }, [removeLoadingMessage, currentChatId])
 
   const handleSend = useCallback(async () => {
     let content = getContent()
-    useDatasetStore.getState().datasets.forEach((dataset) => {
+    useDatasetStore.getState().datasets
+    .sort((a, b) => b.name.length - a.name.length)
+    .forEach((dataset) => {
       const pattern = new RegExp(`@${dataset.name}`, 'g')
       content = content.replace(pattern, `@[${dataset.name}](${dataset.id})`)
     })
@@ -135,7 +139,6 @@ const ChatInput: React.FC = () => {
   }, [editor, getMentions, handleSubmit, setChatEditor, updateDisabledState])
 
   useEffect(() => {
-    // const mentions = getMentions()
     setMentionItems({
       '@': datasets.map((dataset) => ({
         label: dataset.name,
@@ -149,7 +152,7 @@ const ChatInput: React.FC = () => {
   }, [datasets])
 
   return (
-    <div className='flex w-full max-w-full flex-col items-center rounded-lg border border-border bg-white px-3 py-2 md:w-[35rem] lg:w-[43rem] xl:w-[53rem]'>
+    <div className='mr-3 flex w-[53rem] min-w-[15rem] max-w-full flex-col items-center rounded-lg border border-border bg-white px-3 py-2'>
       <MentionsBar />
       <BeautifulMentionsPlugin
         items={mentionItems}
@@ -174,7 +177,7 @@ const ChatInput: React.FC = () => {
                   </div>
                 }
                 aria-placeholder='Ask your data a question. Reference datasets with @'
-                className='z-1 relative max-h-[14rem] min-h-7 w-full resize-none overflow-y-auto leading-6 outline-0 focus-visible:outline-none'
+                className='relative max-h-[14rem] min-h-7 w-full resize-none overflow-y-auto leading-6 outline-0 focus-visible:outline-none'
               />
             }
             ErrorBoundary={LexicalErrorBoundary}

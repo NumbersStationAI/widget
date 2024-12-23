@@ -1,5 +1,6 @@
 import { API_URL } from 'lib/constants'
 import { User } from 'lib/models/user'
+import { getAuthHeaders } from 'lib/utils/token'
 import { z } from 'zod'
 import { create } from 'zustand'
 
@@ -14,26 +15,35 @@ type UserStore = {
   userLoading: boolean
   unauthorized: boolean
   error: string | null
+  bearerToken: string | null
+  // TODO Remove this state once we have shared code between the frontend/ and
+  // the widget/ and we have a separate "admin feedback" chat page.
+  showAdminFeedbackButton: boolean
   login: (values: z.infer<typeof loginFormSchema>) => Promise<void>
   googleLogin: () => void
   logout: () => void
   setUnauthorized: (value: boolean) => void
   setUser: (user: User | null) => void
   setAccount: (account: string) => void
+  setShowAdminFeedbackButton: (v: boolean) => void
   updateUserData: () => void
   setError: (error: string | null) => void
+  setBearerToken: (token: string) => void
 }
 
 export const useUserStore = create<UserStore>()((set, get) => ({
   user: null,
-  userLoading: false,
+  userLoading: true,
   account: null,
   unauthorized: false,
   error: null,
+  bearerToken: null,
+  showAdminFeedbackButton: false,
   setError: (error) => set({ error }),
   setUser: (user) => set({ user }),
   setAccount: (account) => set({ account }),
   setUnauthorized: (value) => set({ unauthorized: value }),
+  setShowAdminFeedbackButton: (v) => set({ showAdminFeedbackButton: v }),
   login: async (values) => {
     get().setError(null)
 
@@ -47,6 +57,7 @@ export const useUserStore = create<UserStore>()((set, get) => ({
           credentials: 'include',
           method: 'POST',
           body: formData,
+          headers: getAuthHeaders(),
         },
       )
       if (!response.ok) {
@@ -70,6 +81,7 @@ export const useUserStore = create<UserStore>()((set, get) => ({
         {
           credentials: 'include',
           method: 'GET',
+          headers: getAuthHeaders(),
         },
       )
       if (!response.ok) {
@@ -96,6 +108,7 @@ export const useUserStore = create<UserStore>()((set, get) => ({
         {
           credentials: 'include',
           method: 'POST',
+          headers: getAuthHeaders(),
         },
       )
       if (!response.ok) {
@@ -110,9 +123,13 @@ export const useUserStore = create<UserStore>()((set, get) => ({
   updateUserData: async () => {
     set({ userLoading: true })
     try {
-      const response = await fetch(`${API_URL}/v1/users/me`, {
-        credentials: 'include',
-      })
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/users/me`,
+        {
+          credentials: 'include',
+          headers: getAuthHeaders(),
+        },
+      )
       if (response.status > 400) {
         throw new Error('Not logged in')
       }
@@ -124,12 +141,13 @@ export const useUserStore = create<UserStore>()((set, get) => ({
     }
     set({ userLoading: false })
   },
+  setBearerToken: (token) => set({ bearerToken: token }),
 }))
 
 export const getAccount = () => {
   return (
     useUserStore.getState().account ??
-    useUserStore.getState().user?.accounts[0].name ??
+    useUserStore.getState().user?.account_name ??
     ''
   )
 }

@@ -15,7 +15,7 @@ export const MentionsMenu: React.FC<BeautifulMentionsMenuProps> = ({
 }) => {
   return (
     <ul
-      className={`fixed bottom-20 left-4 right-4 h-fit max-h-48 overflow-y-auto rounded-md border bg-white p-2 shadow-md ${custom ? 'md:static md:bottom-0' : 'md:absolute md:bottom-16'} md:w-fit`}
+    className={`fixed bottom-20 left-4 right-4 h-fit max-h-48 overflow-y-auto rounded-md border bg-white p-2 shadow-md md:w-[max-content] ${custom ? 'md:static md:bottom-0' : 'md:absolute md:bottom-16'}`}
       {...props}
     />
   )
@@ -29,12 +29,14 @@ export const MentionsMenuItem = forwardRef<
   const ConnectionIcon = getDataAssetConnectionIcon(item.data.connection_type)
   return (
     <li
-      className={`m-0 flex w-full select-none items-center rounded-md p-1 text-sm md:w-64 ${selected ? 'bg-gray-100' : ''} hover:bg-gray-100`}
+      className={`m-0 flex w-full select-none items-center rounded-md p-1 text-sm ${selected ? 'bg-gray-100' : ''} hover:bg-gray-100`}
       {...props}
       ref={ref}
     >
       <Icon className='max-h-4 min-h-4 min-w-4 max-w-4 text-foreground/70' />
-      <span className='mx-2 overflow-hidden text-ellipsis'>{label}</span>
+      <span className='mx-2 truncate max-w-[calc(100vw-96px)] md:max-w-[480px]'>
+        {label}
+      </span>
       <div className='flex-1' />
       <ConnectionIcon className='max-h-4 min-h-4 min-w-4 max-w-4' />
     </li>

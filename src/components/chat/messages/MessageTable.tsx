@@ -7,7 +7,6 @@ import {
   Column,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table'
@@ -24,6 +23,10 @@ import { DataTablePagination } from './DataTablePagination'
 import DataTableToolbar from './DataTableToolbar'
 import DataTableColumnMenu, { ColumnSort } from './DataTableColumnMenu'
 import { Skeleton } from 'components/Skeleton'
+import useSize from '@react-hook/size'
+import { unstable_batchedUpdates } from 'react-dom'
+import { getAuthHeaders } from 'lib/utils/token'
+import { Button } from 'components/Button'
 
 interface Props {
   messageId: string
@@ -41,13 +44,15 @@ export type TableViewMode = 'default' | 'full' | 'wide'
 const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
   const [columns, setColumns] = useState<DataColumn[]>([])
   const [data, setData] = useState([])
-  const [rowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [totalRowCount, setTotalRowCount] = useState(0)
   const [sortedColumns, setSortedColumns] = useState<ColumnSort[]>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const { viewportWidth } = useLayoutStore()
   const tableRef = useRef<HTMLDivElement>(null)
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+  const tableContainerSize = useSize(tableContainerRef)
   const [offsetLeft, setOffsetLeft] = useState(0)
   const [tableViewMode, setTableViewMode] = useState<TableViewMode>('default')
   const [selectedCellId, setSelectedCellId] = useState<string>('')
@@ -58,7 +63,6 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     state: {
       columnVisibility,
@@ -81,18 +85,20 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
     (column: string) => {
       const index = sortedColumns.findIndex((c) => c.column === column)
       if (index !== -1) {
-        const newColumns = [...sortedColumns]
         //Remove if sorting is descending
         if (sortedColumns[index].direction === 'desc') {
-          newColumns.splice(index, 1)
-          setSortedColumns(newColumns)
+          setSortedColumns([])
         } else {
-          newColumns[index].direction =
-            sortedColumns[index].direction === 'asc' ? 'desc' : 'asc'
-          setSortedColumns(newColumns)
+          setSortedColumns([
+            {
+              column,
+              direction:
+                sortedColumns[index].direction === 'asc' ? 'desc' : 'asc',
+            },
+          ])
         }
       } else {
-        setSortedColumns([...sortedColumns, { column, direction: 'asc' }])
+        setSortedColumns([{ column, direction: 'asc' }])
       }
     },
     [sortedColumns],
@@ -105,6 +111,7 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
         `${API_URL}/v3/orgs/${getAccount()}/messages/${messageId}/data?limit=${rowsPerPage}&skip=${currentPageIndex * rowsPerPage}&sort=${serializeColumnsSorting(sortedColumns)}`,
         {
           credentials: 'include',
+          headers: getAuthHeaders(),
         },
       )
       const data = await response.json()
@@ -169,6 +176,7 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
         credentials: 'include',
         headers: {
           'Content-Type': 'text/csv',
+          ...getAuthHeaders(),
         },
       },
     )
@@ -187,7 +195,18 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
 
   useEffect(() => {
     getTableData()
-  }, [currentPageIndex, getTableData, rowsPerPage, table])
+  }, [currentPageIndex, getTableData, rowsPerPage])
+
+  const onFirstPage = useCallback(() => {
+    loadingTypeRef.current = 'paginating'
+    setCurrentPageIndex(0)
+  }, [])
+
+  const onLastPage = useCallback(() => {
+    loadingTypeRef.current = 'paginating'
+    const lastPageIndex = Math.floor((totalRowCount - 1) / rowsPerPage)
+    setCurrentPageIndex(lastPageIndex)
+  }, [totalRowCount, rowsPerPage])  
 
   const onPreviousPage = useCallback(() => {
     if (currentPageIndex === 0) return
@@ -201,9 +220,44 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
     setCurrentPageIndex(currentPageIndex + 1)
   }, [currentPageIndex, totalRowCount, rowsPerPage])
 
+  useEffect(() => {
+    const currentStartRowIndex = currentPageIndex * rowsPerPage
+    if (tableViewMode === 'full') {
+      const cellHeight = 36
+      const headerHeight = 36
+      const toolbarHeight = 48
+      const footerHeight = 48
+      const borderHeight = 1
+
+      const tableHeight =
+        tableContainerSize[1] -
+        headerHeight -
+        toolbarHeight -
+        footerHeight -
+        borderHeight * 2
+
+      unstable_batchedUpdates(() => {
+        const newRowsPerPage = Math.floor(
+          tableHeight / (cellHeight + borderHeight),
+        )
+        setCurrentPageIndex(Math.floor(currentStartRowIndex / newRowsPerPage))
+        setRowsPerPage(newRowsPerPage)
+      })
+    } else {
+      unstable_batchedUpdates(() => {
+        const newRowsPerPage = 10
+        setCurrentPageIndex(Math.floor(currentStartRowIndex / newRowsPerPage))
+        setRowsPerPage(newRowsPerPage)
+      })
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableContainerSize])
+
   return (
     <div className='max-w-full flex-1' ref={tableRef}>
       <div
+        ref={tableContainerRef}
         className={`flex flex-1 flex-col ${
           tableViewMode === 'full'
             ? 'fixed bottom-0 left-0 right-0 top-0 z-10 h-full min-h-fit overflow-y-auto bg-white'
@@ -226,7 +280,13 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
           tableViewMode={tableViewMode}
           setTableViewMode={setTableViewMode}
         />
-        <div className='max-w-full overflow-hidden rounded-md shadow-[inset_0px_0px_0px_1px_hsl(var(--border))]'>
+        <div
+          className={`relative max-w-full overflow-hidden ${tableViewMode !== 'full' ? 'rounded-md' : ''}`}
+        >
+          {tableViewMode !== 'full' && (
+            <div className='pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-10 rounded-md bg-transparent shadow-[inset_0px_0px_0px_1px_hsl(var(--border))]' />
+          )}
+
           <Table className=''>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -235,7 +295,7 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
                     return (
                       <TableHead
                         key={header.id}
-                        className={`h-10 whitespace-nowrap border border-border bg-[#F5F5F5] text-sm text-foreground`}
+                        className={`h-9 whitespace-nowrap border border-border bg-[#F5F5F5] text-sm text-primary`}
                       >
                         {header.isPlaceholder
                           ? null
@@ -249,43 +309,48 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
                 </TableRow>
               ))}
             </TableHeader>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows?.length &&
+            table.getAllColumns().filter((column) => column.getIsVisible())
+              .length ? (
               <TableBody>
-                {table.getRowModel().rows.map((row, rowIndex) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells().map((cell, columnIndex) => (
-                      <TableCell
-                        key={cell.id}
-                        className={`whitespace-nowrap border border-border text-foreground/75 ${selectedCellId === cell.id ? 'shadow-[inset_0px_0px_0px_1px_#000]' : 'border-border'}`}
-                        onClick={() =>
-                          selectedCellId === cell.id
-                            ? setSelectedCellId('')
-                            : setSelectedCellId(cell.id)
-                        }
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
+                {table
+                  .getRowModel()
+                  .rows.slice(0, rowsPerPage)
+                  .map((row, rowIndex) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                    >
+                      {row.getVisibleCells().map((cell, columnIndex) => (
+                        <TableCell
+                          key={cell.id}
+                          className={`h-[34px] whitespace-nowrap border border-border text-primary/75 ${selectedCellId === cell.id ? 'shadow-[inset_0px_0px_0px_1px_#000]' : 'border-border'}`}
+                          onClick={() =>
+                            selectedCellId === cell.id
+                              ? setSelectedCellId('')
+                              : setSelectedCellId(cell.id)
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
               </TableBody>
             ) : isLoading ? (
               <>
                 <TableHeader>
                   <TableRow>
                     <TableHead
-                      className={`h-10 whitespace-nowrap border border-border bg-[#F5F5F5] p-1 text-sm text-foreground`}
+                      className={`h-9 whitespace-nowrap border border-border bg-[#F5F5F5] px-3 py-2 text-sm text-foreground`}
                     >
                       <Skeleton className='h-full w-48 rounded-sm bg-[#DFDFDF]' />
                     </TableHead>
                     <TableHead
-                      className={`h-10 w-full whitespace-nowrap border border-border bg-[#F5F5F5] p-1 text-sm text-foreground`}
+                      className={`h-9 w-full whitespace-nowrap border border-border bg-[#F5F5F5] px-3 py-2 text-sm text-foreground`}
                     >
                       <Skeleton className='h-full w-48 rounded-sm bg-[#DFDFDF]' />
                     </TableHead>
@@ -295,15 +360,34 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
                   <TableRow>
                     <TableCell
                       key={1}
-                      className='h-10 border border-border text-center'
+                      className='h-[34px] border border-border text-center'
                     ></TableCell>
                     <TableCell
                       key={2}
-                      className='h-10 border border-border text-center'
+                      className='h-[34px] border border-border text-center'
                     ></TableCell>
                   </TableRow>
                 </TableBody>
               </>
+            ) : table.getAllColumns().filter((column) => column.getIsVisible())
+                .length === 0 && table.getAllColumns().length > 0 ? (
+              <TableBody>
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='flex h-28 flex-col items-center justify-center gap-2 text-center'
+                  >
+                    All columns are hidden.
+                    <Button
+                      onClick={() => {
+                        table.toggleAllColumnsVisible(true)
+                      }}
+                    >
+                      Reset columns
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
             ) : (
               <TableBody>
                 <TableRow>
@@ -325,6 +409,8 @@ const MessageTable: React.FC<Props> = memo(({ messageId, sql, streaming }) => {
             rowsPerPage={rowsPerPage}
             onPreviousPage={onPreviousPage}
             onNextPage={onNextPage}
+            onFirstPage={onFirstPage}
+            onLastPage={onLastPage}   
             paginating={isLoading && loadingTypeRef.current === 'paginating'}
           />
         )}

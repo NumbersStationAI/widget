@@ -24,8 +24,8 @@ const ProgressMessages: React.FC<ProgressMessagesProps> = ({ messages }) => {
       className='flex w-fit flex-col items-start justify-center rounded-xl bg-[#FAFAFA] px-3 py-1 text-sm'
       onClick={() => setShowAll(!showAll)}
     >
-      <div className='flex h-[2.25rem] w-full items-center gap-2'>
-        <Spinner size='24' />
+      <div className='flex h-[2.25rem] w-full items-center gap-3'>
+        <Spinner size={0.5} />
         {currentProgressMessage && currentProgressMessage.markdown && (
           <MessageMarkdown>{currentProgressMessage.markdown}</MessageMarkdown>
         )}

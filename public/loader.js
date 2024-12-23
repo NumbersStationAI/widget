@@ -1,6 +1,28 @@
+function widgetApi() {
+  return new Promise((resolve) => {
+    let timeoutId
+
+    const getApi = () => {
+      const event = new Event('getWidgetApi')
+      timeoutId = window.setTimeout(getApi, 1000)
+      window.dispatchEvent(event)
+    }
+
+    const onWidgetApi = (e) => {
+      const api = e.detail
+      window.clearTimeout(timeoutId)
+      resolve(api)
+    }
+
+    window.addEventListener('widgetApi', onWidgetApi, { once: true })
+    getApi()
+  })
+}
+
 ;(() => {
   const script = document.currentScript
-  const origin = script.src.split('/').slice(0, -1).join('/')
+  const parentUrl = new URL(script.src)
+  const origin = parentUrl.origin
 
   const WIDGET_ANIMATION = '0.2s ease-in'
   const BUTTON_ANIMATION = '0.15s ease-in'
@@ -184,6 +206,14 @@
         } else {
           hide()
         }
+      },
+      setBearerToken: (token) => {
+        iframe.contentWindow.postMessage(
+          {
+            setBearerToken: token,
+          },
+          origin,
+        )
       },
     }
 

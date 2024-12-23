@@ -1,6 +1,6 @@
 {
   "name": "example-chat-widget",
-  "version": "171.1.0",
+  "version": "172.26.2",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -28,6 +28,8 @@
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "copy-to-clipboard": "^3.3.3",
+    "feather-icons-react": "^0.7.0",
     "highlight.js": "^11.10.0",
     "ldrs": "^1.0.2",
     "lexical": "^0.19.0",
@@ -40,6 +42,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.1",
+    "react-infinite-scroll-component": "^6.1.0",
     "react-resizable-panels": "^2.1.6",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
@@ -48,6 +51,7 @@
     "tableau-react": "^2.2.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
+    "usehooks-ts": "^3.1.0",
     "vega-embed": "^6.26.0",
     "web-vitals": "^4.2.4",
     "zod": "^3.23.8",

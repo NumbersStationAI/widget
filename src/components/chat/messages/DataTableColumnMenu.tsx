@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useCallback } from 'react'
 import { toast } from 'sonner'
+import copy from 'copy-to-clipboard'
 
 interface DataTableColumnMenuProps {
   columnKey: string
@@ -41,16 +42,9 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
   const setColumnSorting = useCallback(
     (column: string, direction: 'asc' | 'desc') => {
       setLoadingType()
-      const index = sortedColumns.findIndex((c) => c.column === column)
-      if (index !== -1) {
-        const newColumns = [...sortedColumns]
-        newColumns[index].direction = direction
-        setSortedColumns(newColumns)
-      } else {
-        setSortedColumns([...sortedColumns, { column, direction }])
-      }
+      setSortedColumns([{ column, direction }])
     },
-    [setLoadingType, sortedColumns, setSortedColumns],
+    [setLoadingType, setSortedColumns],
   )
 
   const clearColumnSorting = useCallback(
@@ -58,9 +52,7 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
       setLoadingType()
       const index = sortedColumns.findIndex((c) => c.column === column)
       if (index !== -1) {
-        const newColumns = [...sortedColumns]
-        newColumns.splice(index, 1)
-        setSortedColumns(newColumns)
+        setSortedColumns([])
       }
     },
     [setLoadingType, setSortedColumns, sortedColumns],
@@ -98,8 +90,11 @@ const DataTableColumnMenu: React.FC<DataTableColumnMenuProps> = ({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => {
-            navigator.clipboard.writeText(columnKey)
-            toast('Column ID copied to clipboard')
+            if (copy(columnKey)) {
+              toast('Column ID copied to clipboard')
+            } else {
+              toast('Failed to copy to clipboard')
+            }
           }}
         >
           <Copy />

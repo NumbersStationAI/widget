@@ -4,6 +4,7 @@ import { Sheet, SheetClose, SheetContent } from 'components/Sheet'
 import { Code, Copy } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import copy from 'copy-to-clipboard'
 
 interface CodeSheetProps {
   code: string
@@ -31,8 +32,11 @@ const CodeSheet: React.FC<CodeSheetProps> = ({ code, language }) => {
             size='icon'
             variant='ghost'
             onClick={() => {
-              navigator.clipboard.writeText(code)
-              toast('SQL copied to clipboard')
+              if (copy(code)) {
+                toast('SQL copied to clipboard')
+              } else {
+                toast('Failed to copy to clipboard')
+              }
             }}
           >
             <Copy />
