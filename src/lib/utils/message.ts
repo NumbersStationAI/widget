@@ -8,3 +8,7 @@ export const isMessageEmpty = (message: ChatMessage) => {
     message.message_table_id === null
   )
 }
+
+export function getMessageKey(id: string | number, responseIndex: number | undefined): string {
+  return `${id}-${responseIndex}`
+}

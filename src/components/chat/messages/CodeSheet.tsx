@@ -1,17 +1,17 @@
 import { Button, TooltipButton } from 'components/Button'
 import { Markdown } from 'components/Markdown'
 import { Sheet, SheetClose, SheetContent } from 'components/Sheet'
+import copy from 'copy-to-clipboard'
 import { Code, Copy } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import copy from 'copy-to-clipboard'
 
 interface CodeSheetProps {
   code: string
   language: string
 }
 
-const CodeSheet: React.FC<CodeSheetProps> = ({ code, language }) => {
+export function CodeSheet({ code, language }: CodeSheetProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -50,5 +50,3 @@ const CodeSheet: React.FC<CodeSheetProps> = ({ code, language }) => {
     </Sheet>
   )
 }
-
-export default CodeSheet

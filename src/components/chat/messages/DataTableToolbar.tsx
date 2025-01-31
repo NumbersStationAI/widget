@@ -1,4 +1,12 @@
+import { Table } from '@tanstack/react-table'
 import { Button, TooltipButton } from 'components/Button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from 'components/Dropdown'
+import Spinner from 'components/Spinner'
 import {
   Download,
   Eye,
@@ -9,21 +17,15 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import CodeSheet from '../messages/CodeSheet'
-import { Table } from '@tanstack/react-table'
-import Spinner from 'components/Spinner'
+import { CodeSheet } from '../messages/CodeSheet'
+import { ExplanationSheet } from './ExplanationSheet'
 import { TableViewMode } from './MessageTable'
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from 'components/Dropdown'
 
 interface DataTableToolbarProps {
-  getTableData: () => void
+  onRefreshButtonClick: () => void
   table: Table<never>
   sql: string
+  messageId: string
   handleDownload: () => Promise<void>
   tableViewMode: string
   setTableViewMode: (mode: TableViewMode) => void
@@ -31,9 +33,10 @@ interface DataTableToolbarProps {
 }
 
 const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
-  getTableData,
+  onRefreshButtonClick,
   table,
   sql,
+  messageId,
   handleDownload,
   tableViewMode,
   setTableViewMode,
@@ -51,7 +54,7 @@ const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
         <TooltipButton
           size='icon'
           variant='ghost'
-          onClick={() => getTableData()}
+          onClick={() => onRefreshButtonClick()}
           tooltip='Refresh'
         >
           <RefreshCcw />
@@ -93,6 +96,7 @@ const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      <ExplanationSheet messageId={messageId} />
       <CodeSheet code={sql ?? ''} language='SQL' />
 
       <TooltipButton

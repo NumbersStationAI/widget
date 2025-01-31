@@ -1,10 +1,10 @@
-import Sidebar from './Sidebar'
-import ExpandButton from './ExpandButton'
-import MessageView from './MessageView'
 import { useLayoutStore } from 'lib/stores/layout'
+import ExpandButton from './ExpandButton'
 import HideButton from './HideButton'
 import ChatInput from './input/ChatInput'
+import MessageView from './MessageView'
 import NewChatButton from './NewChatButton'
+import { Sidebar } from './Sidebar'
 import SidebarButton from './SidebarButton'
 
 const ChatSmall: React.FC = () => {

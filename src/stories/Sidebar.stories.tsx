@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import Sidebar from 'components/chat/Sidebar'
+import { Sidebar } from 'components/chat/Sidebar'
 
 const meta = {
   title: 'Chat/Sidebar',
@@ -10,7 +10,7 @@ const meta = {
   tags: ['autodocs'],
   argTypes: {},
   args: {
-    onChatSelected: () => {},
+    onChatSelected: () => { },
   },
 } satisfies Meta<typeof Sidebar>
 

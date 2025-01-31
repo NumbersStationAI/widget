@@ -1,7 +1,8 @@
 {
-  "name": "example-chat-widget",
-  "version": "172.26.2",
+  "name": "widget",
+  "version": "176.16.15",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@kodingdotninja/use-tailwind-breakpoint": "^1.0.0",
@@ -20,6 +21,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@react-hook/size": "^2.1.2",
+    "@tanstack/react-query": "^5.62.11",
     "@tanstack/react-table": "^8.20.5",
     "@testing-library/jest-dom": "^6.6.2",
     "@testing-library/react": "^16.0.1",
@@ -65,7 +67,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "generate": "kubb generate",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx src"
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src",
+    "format": "prettier src --write"
   },
   "eslintConfig": {
     "extends": [

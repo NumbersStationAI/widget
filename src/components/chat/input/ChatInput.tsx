@@ -1,15 +1,8 @@
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin'
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin'
-import {
-  BeautifulMentionsPlugin,
-  useBeautifulMentions,
-} from 'lexical-beautiful-mentions'
-import { useDatasetStore } from 'lib/stores/datasets'
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { getAccount } from 'lib/stores/user'
-import { clearContent, getContent, useChatStore } from 'lib/stores/chat'
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import {
   $getSelection,
   $isRangeSelection,
@@ -17,13 +10,20 @@ import {
   INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
 } from 'lexical'
-import { useState, useReducer, useEffect, useCallback } from 'react'
-import MentionsBar from './MentionsBar'
-import { MentionsMenu, MentionsMenuItem } from './MentionsMenu'
+import {
+  BeautifulMentionsPlugin,
+  useBeautifulMentions,
+} from 'lexical-beautiful-mentions'
+import { API_URL } from 'lib/constants'
+import { clearContent, getContent, useChatStore } from 'lib/stores/chat'
+import { useDatasetStore } from 'lib/stores/datasets'
+import { getAccount } from 'lib/stores/user'
+import { getAuthHeaders } from 'lib/utils/token'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import SendButton from '../SendButton'
 import ChatInputToolbar from './ChatInputToolbar'
-import { API_URL } from 'lib/constants'
-import { getAuthHeaders } from 'lib/utils/token'
+import MentionsBar from './MentionsBar'
+import { MentionsMenu, MentionsMenuItem } from './MentionsMenu'
 
 const ChatInput: React.FC = () => {
   const [editor] = useLexicalComposerContext()
@@ -31,11 +31,13 @@ const ChatInput: React.FC = () => {
   const {
     inputState,
     updateDisabledState,
-    currentChatId,
+    currentChat,
     currentChatMessages,
     sendMessage,
     removeLoadingMessage,
+    isReadOnlyChat,
   } = useChatStore()
+  editor.setEditable(!isReadOnlyChat)
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const [mentionItems, setMentionItems] = useState<Record<string, any>>({
@@ -45,25 +47,25 @@ const ChatInput: React.FC = () => {
   const { getMentions } = useBeautifulMentions()
 
   const handleInterrupt = useCallback(async () => {
+    if (!currentChat) return
     await fetch(
-      `${API_URL}/v3/orgs/${getAccount()}/chat/${useChatStore.getState().currentChatId}/interrupt`,
+      `${API_URL}/v3/orgs/${getAccount()}/chat/${currentChat.id}/interrupt`,
       {
         method: 'POST',
         credentials: 'include',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       },
     )
-    removeLoadingMessage(currentChatId)
-  }, [removeLoadingMessage, currentChatId])
+    removeLoadingMessage(currentChat.id)
+  }, [removeLoadingMessage, currentChat])
 
   const handleSend = useCallback(async () => {
     let content = getContent()
     useDatasetStore.getState().datasets
-    .sort((a, b) => b.name.length - a.name.length)
-    .forEach((dataset) => {
-      const pattern = new RegExp(`@${dataset.name}`, 'g')
-      content = content.replace(pattern, `@[${dataset.name}](${dataset.id})`)
-    })
+      .sort((a, b) => b.name.length - a.name.length)
+      .forEach((dataset) => {
+        content = content.split(`@${dataset.name}`).join(`@[${dataset.name}](ds-${dataset.id})`)
+      })
     clearContent()
 
     sendMessage(content)
@@ -71,8 +73,8 @@ const ChatInput: React.FC = () => {
 
   const handleSubmit = useCallback(
     (keyboardCommand = false) => {
-      const currentChatId = useChatStore.getState().currentChatId
-      const inputState = useChatStore.getState().inputState.get(currentChatId)
+      const currentChatId = useChatStore.getState().currentChat?.id
+      const inputState = useChatStore.getState().inputState.get(currentChatId || '')
       switch (inputState) {
         case 'send':
           handleSend()
@@ -91,7 +93,7 @@ const ChatInput: React.FC = () => {
 
   useEffect(() => {
     setChatEditor(editor)
-    updateDisabledState(useChatStore.getState().currentChatId)
+    updateDisabledState(useChatStore.getState().currentChat?.id || '')
     editor.registerCommand<KeyboardEvent | null>(
       KEY_ENTER_COMMAND,
       (event) => {
@@ -112,7 +114,7 @@ const ChatInput: React.FC = () => {
     )
 
     editor.registerTextContentListener(() => {
-      updateDisabledState(useChatStore.getState().currentChatId)
+      updateDisabledState(useChatStore.getState().currentChat?.id || '')
       const newMentions = useDatasetStore
         .getState()
         .datasets.filter(
@@ -171,9 +173,10 @@ const ChatInput: React.FC = () => {
               <ContentEditable
                 placeholder={
                   <div className='pointer-events-none absolute left-0 top-0 w-full select-none overflow-hidden overflow-ellipsis whitespace-nowrap text-foreground/50'>
-                    {currentChatMessages.length === 0
-                      ? 'Ask your data a question. Reference datasets with @'
-                      : 'Ask a follow-up question'}
+                    {isReadOnlyChat ? 'This chat is read-only.' :
+                      currentChatMessages.length === 0
+                        ? 'Ask your data a question. Reference datasets with @'
+                        : 'Ask a follow-up question'}
                   </div>
                 }
                 aria-placeholder='Ask your data a question. Reference datasets with @'
@@ -186,9 +189,9 @@ const ChatInput: React.FC = () => {
         </div>
 
         <div className='flex h-full items-end gap-2'>
-          <ChatInputToolbar currentMentions={mentionItems['@']} />
+          <ChatInputToolbar currentMentions={mentionItems['@']} disabled={isReadOnlyChat} />
           <SendButton
-            state={inputState.get(currentChatId) ?? 'send'}
+            state={inputState.get(currentChat?.id || '') ?? 'send'}
             onSubmit={() => handleSubmit(false)}
           />
         </div>

@@ -18,14 +18,14 @@ type UserStore = {
   bearerToken: string | null
   // TODO Remove this state once we have shared code between the frontend/ and
   // the widget/ and we have a separate "admin feedback" chat page.
-  showAdminFeedbackButton: boolean
+  isFeedbackChat: boolean
   login: (values: z.infer<typeof loginFormSchema>) => Promise<void>
   googleLogin: () => void
   logout: () => void
   setUnauthorized: (value: boolean) => void
   setUser: (user: User | null) => void
   setAccount: (account: string) => void
-  setShowAdminFeedbackButton: (v: boolean) => void
+  setIsFeedbackChat: (v: boolean) => void
   updateUserData: () => void
   setError: (error: string | null) => void
   setBearerToken: (token: string) => void
@@ -38,12 +38,12 @@ export const useUserStore = create<UserStore>()((set, get) => ({
   unauthorized: false,
   error: null,
   bearerToken: null,
-  showAdminFeedbackButton: false,
+  isFeedbackChat: false,
   setError: (error) => set({ error }),
   setUser: (user) => set({ user }),
   setAccount: (account) => set({ account }),
   setUnauthorized: (value) => set({ unauthorized: value }),
-  setShowAdminFeedbackButton: (v) => set({ showAdminFeedbackButton: v }),
+  setIsFeedbackChat: (v) => set({ isFeedbackChat: v }),
   login: async (values) => {
     get().setError(null)
 

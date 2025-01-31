@@ -1,22 +1,34 @@
 import { ChatMessage } from 'lib/models/message'
+import { cn } from 'lib/utils'
 import MessageMarkdown from './MessageMarkdown'
 import MessageTable from './MessageTable'
-import VegaEmbed from './VegaEmbed'
-import Tableau from './Tableau'
 import SuggestionItem from './SuggestionItem'
+import Tableau from './Tableau'
+import VegaEmbed from './VegaEmbed'
 
 interface Props {
   message: ChatMessage
   groupIndex: number
+  isPopoverFeedbackChat: boolean
 }
 
-const ChatMessageWidget: React.FC<Props> = ({ message, groupIndex }) => {
+const ChatMessageWidget: React.FC<Props> = ({
+  message,
+  groupIndex,
+  isPopoverFeedbackChat,
+}) => {
   return (
     <div
-      className={`flex flex-col ${message.sending_agent !== 'user' ? 'w-full' : 'w-fit self-end rounded-xl bg-[#F5F5F5] px-4 py-2'} max-w-full justify-center gap-1`}
+      className={`relative flex flex-col ${message.sending_agent !== 'user' ? 'w-full' : 'w-fit self-end rounded-xl bg-[#F5F5F5] px-4 py-2'} max-w-full justify-center gap-1`}
+      id={message.id}
     >
       {message.markdown && (
-        <MessageMarkdown className='!text-[1rem]'>
+        <MessageMarkdown
+          className={cn(
+            '!text-base',
+            isPopoverFeedbackChat && '!text-sm',
+          )}
+        >
           {message.markdown}
         </MessageMarkdown>
       )}

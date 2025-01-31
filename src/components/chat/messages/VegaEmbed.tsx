@@ -1,14 +1,14 @@
+import useSize from '@react-hook/size'
 import { TooltipButton } from 'components/Button'
 import ErrorAlert from 'components/ErrorAlert'
+import { useLayoutStore } from 'lib/stores/layout'
 import { Download, RectangleHorizontal, Square } from 'lucide-react'
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import vegaEmbed, { Result, VisualizationSpec } from 'vega-embed'
-import CodeSheet from './CodeSheet'
-import { useLayoutStore } from 'lib/stores/layout'
 import { toast } from 'sonner'
-import useSize from '@react-hook/size'
+import vegaEmbed, { Result } from 'vega-embed'
+import { CodeSheet } from './CodeSheet'
 
-const VegaEmbed = memo(({ spec }: { spec: string }) => {
+const VegaEmbed = memo(({ spec }: { spec: any }) => {
   const [error, setError] = useState<unknown>()
   const ref = useRef<HTMLDivElement>(null)
   const { viewportWidth } = useLayoutStore()
@@ -21,14 +21,11 @@ const VegaEmbed = memo(({ spec }: { spec: string }) => {
   useEffect(() => {
     async function render(el: HTMLElement) {
       try {
-        ;(spec as VisualizationSpec)['autosize'] = {
-          type: 'fit-x',
-          contains: 'padding',
-        }
+        spec['padding'] = 10
+        spec['width'] = 'container'
         setEmbed(
           await vegaEmbed(el, spec, {
             actions: false,
-            width: embedSize[0] - 20,
           }),
         )
       } catch (e) {
@@ -55,8 +52,8 @@ const VegaEmbed = memo(({ spec }: { spec: string }) => {
   return error != null ? (
     <ErrorAlert
       message={`There was an issue rendering this chart: ${error}`}
-      // error={error}
-      // title='There was an issue rendering this chart.'
+    // error={error}
+    // title='There was an issue rendering this chart.'
     />
   ) : (
     <div className='max-w-full flex-1' ref={tableRef}>
@@ -115,7 +112,7 @@ const VegaEmbed = memo(({ spec }: { spec: string }) => {
 
         <div
           ref={ref}
-          className='w-full overflow-x-auto rounded-lg border p-2'
+          className='w-full overflow-x-auto rounded-lg border'
         />
       </div>
     </div>

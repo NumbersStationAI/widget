@@ -17,6 +17,7 @@ import {
 import ErrorAlert from './ErrorAlert'
 import HideButton from './chat/HideButton'
 import { useUserStore } from 'lib/stores/user'
+import { useCustomizationStore } from 'lib/stores/customization'
 
 const formSchema = z.object({
   username: z.string().email().min(1, 'Email is required'),
@@ -26,6 +27,7 @@ const formSchema = z.object({
 const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const { googleLogin, login, error } = useUserStore()
+  const { showMinimizeButton } = useCustomizationStore()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,7 +48,7 @@ const Login: React.FC = () => {
   return (
     <div className='relative flex h-full w-full flex-col items-center justify-between border border-border bg-white p-8'>
       <div className='absolute right-0 top-0 flex gap-1 p-4'>
-        <HideButton />
+        {showMinimizeButton && <HideButton />}
       </div>
       <div className='mb-6 flex justify-center'>
         <Logo />

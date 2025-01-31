@@ -6,10 +6,12 @@ import FeatherIcon from 'feather-icons-react'
 
 interface ChatInputToolbarProps {
   currentMentions: any[]
+  disabled?: boolean
 }
 
 const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   currentMentions,
+  disabled,
 }) => {
   const { insertMention } = useBeautifulMentions()
 
@@ -22,8 +24,9 @@ const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
           className='rounded-md'
           onClick={() => {}}
           tooltip='Add context'
+          disabled={disabled}
         >
-          <FeatherIcon icon="at-sign"/>
+          <FeatherIcon icon='at-sign' />
         </TooltipButton>
       </PopoverTrigger>
       <PopoverContent className='mb-3 w-fit p-2'>

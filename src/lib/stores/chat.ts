@@ -1,14 +1,14 @@
+import { $getRoot, $getSelection, LexicalEditor } from 'lexical'
+import { API_URL } from 'lib/constants'
 import { Chat } from 'lib/models/chat'
 import { ChatMessage } from 'lib/models/message'
+import { Suggestion } from 'lib/models/suggestions'
+import { checkResponseError } from 'lib/utils/fetch'
+import { isMessageEmpty } from 'lib/utils/message'
+import { replaceAll } from 'lib/utils/string'
+import { getAuthHeaders } from 'lib/utils/token'
 import { create } from 'zustand'
 import { getAccount } from './user'
-import { isMessageEmpty } from 'lib/utils/message'
-import { $getRoot, $getSelection, LexicalEditor } from 'lexical'
-import { Suggestion } from 'lib/models/suggestions'
-import { replaceAll } from 'lib/utils/string'
-import { API_URL } from 'lib/constants'
-import { checkResponseError } from 'lib/utils/fetch'
-import { getAuthHeaders } from 'lib/utils/token'
 
 export type InputState = 'loading' | 'disabled' | 'send' | 'interrupt'
 
@@ -16,21 +16,25 @@ type ChatStore = {
   chats: Chat[]
   totalChats: number
   chatsOffset: number
-  currentChatId: string
+  currentChat: Chat | null
   currentChatMessages: ChatMessage[]
   loadingMessages: boolean
   chatEditor: LexicalEditor | null
   suggestions: Suggestion[]
   inputState: Map<string, InputState>
+  isReadOnlyChat: boolean
+  chatIdUpdates: Map<string, string>
+  getUpdatedChatId: (id: string) => string
+  updateChatId: (oldId: string, newId: string) => Promise<void>
   setChatEditor: (input: LexicalEditor) => void
   setChatInput: (input: string) => void
-  setChats: (chats: Chat[]) => void
   setInputState: (id: string, state: InputState) => void
   updateDisabledState: (id: string) => void
   createNewChat: () => void
-  setCurrentChatId: (id: string, updateMessages?: boolean) => void
+  setCurrentChat: (chat: Chat | null, updateMessages?: boolean) => void
   setCurrentChatMessages: (data: ChatMessage[]) => void
   setLoadingMessages: (loading: boolean) => void
+  setIsReadOnlyChat: (readOnly: boolean) => void
   updateChatMessage: (
     id: string,
     responseIndex: number,
@@ -41,32 +45,63 @@ type ChatStore = {
   removeChatMessage: (id: string) => void
   removeLoadingMessage: (chatId: string) => void
   addChat: (chat: Chat) => void
-  updateChat: (id: string, chat: Chat) => void
+  updateLocalChatState: (id: string, chat: Chat) => void
+  updateChat: (id: string, chat: Chat) => Promise<void>
   removeChat: (id: string) => void
   fetchChats: () => void
   fetchChatMessages: () => void
   deleteChat: (id: string) => void
+  cloneChat: (id: string) => void
   removeTemporaryMessages: (chatId: string) => void
   fetchSuggestions: () => void
+  postMessage: (body: string, chatId: string, tempMessageId: string, attempt?: number) => void
   handleStreamEnd: (chatId: string) => void
+  handleStreamFail: (chatId: string) => void
   fetchChatUpdate: (id: string) => void
   handleResponse: (
     response: Response,
-    tempChatId: string,
+    chatId: string,
     tempMessageId: string,
   ) => Promise<void>
+  activeFeedbackId: string | null
+  setActiveFeedback: (messageId: string | null) => void
 }
 
 export const useChatStore = create<ChatStore>()((set, get) => ({
   chats: [],
   totalChats: 0,
   chatsOffset: 0,
-  currentChatId: '',
+  currentChat: null,
   currentChatMessages: [],
   loadingMessages: false,
   chatEditor: null,
   suggestions: [],
   inputState: new Map<string, InputState>([['', 'disabled']]),
+  isReadOnlyChat: true,
+  chatIdUpdates: new Map<string, string>(),
+  getUpdatedChatId: (id) => get().chatIdUpdates.get(id) ?? id,
+  updateChatId: async (oldId, newId) => {
+    const chatIdUpdates = get().chatIdUpdates
+    chatIdUpdates.set(oldId, newId)
+    set({ chatIdUpdates: chatIdUpdates })
+    const inputState = get().inputState.get(oldId)
+    const response = await fetch(
+      `${API_URL}/v3/orgs/${getAccount()}/chat/${newId}`,
+      {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      },
+    )
+    const data = await response.json()
+    data.name ??= 'Untitled Chat'
+    get().setInputState(newId, inputState ?? 'send')
+    get().addChat(data)
+    get().removeChat(oldId)
+
+    if (get().currentChat?.id === oldId) {
+      get().setCurrentChat(data, false)
+    }
+  },
   setInputState: (id, state) => {
     const inputState = get().inputState
     inputState.set(id, state)
@@ -84,24 +119,18 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       }
     })
   },
-  setChats: (chats) =>
-    set({
-      chats: chats?.sort(
-        (a, b) =>
-          Date.parse(b.last_modified_at) - Date.parse(a.last_modified_at),
-      ),
-    }),
   createNewChat: () => {
-    get().setCurrentChatId('')
+    get().setCurrentChat(null)
   },
-  setCurrentChatId: (currentChatId, updateMessages = true) => {
-    set({ currentChatId: currentChatId })
+  setCurrentChat: (currentChat, updateMessages = true) => {
+    set({ currentChat: currentChat })
     if (updateMessages !== false) {
       get().fetchChatMessages()
     }
-    if (get().inputState.get(currentChatId) === undefined) {
-      get().setInputState(currentChatId, 'disabled')
+    if (currentChat && get().inputState.get(currentChat.id) === undefined) {
+      get().setInputState(currentChat.id, 'disabled')
     }
+    const currentChatId = currentChat?.id ?? ''
     window.parent.postMessage({ currentChatId }, '*')
   },
   addChat: (chat) => {
@@ -116,12 +145,35 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       })
     }
   },
-  updateChat: (id, chat) => {
+  updateLocalChatState: (id, chat) => {
     set((state) => {
       const index = state.chats.findIndex((chat) => chat.id === id)
       state.chats[index] = chat
       return { chats: state.chats }
     })
+  },
+  updateChat: async (id: string, updatedChat: Chat) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/chat/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ chat_name: updatedChat.name })
+        }
+      )
+      checkResponseError(response)
+      const data = await response.json()
+      get().updateLocalChatState(id, data)
+      return data
+    } catch (error) {
+      console.error('Failed to update chat:', error)
+      throw error
+    }
   },
   removeChat: (id) => {
     set((state) => {
@@ -136,6 +188,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
         .reverse(),
     }),
   setLoadingMessages: (loading) => set({ loadingMessages: loading }),
+  setIsReadOnlyChat: (readOnly) => set({ isReadOnlyChat: readOnly }),
   addChatMessage: (message) => {
     set((state) => {
       state.currentChatMessages = state.currentChatMessages
@@ -155,8 +208,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   removeLoadingMessage: (chatId) => {
     set((state) => {
       state.currentChatMessages = state.currentChatMessages?.filter(
-        (message) =>
-          message.render_type !== 'LOADING' || message.chat_id !== chatId,
+        (message) => message.render_type !== 'LOADING',
       )
       return { currentChatMessages: state.currentChatMessages }
     })
@@ -178,16 +230,16 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   },
   fetchChats: async () => {
     try {
-      const response = await fetch(
+      const allChatsResponse = await fetch(
         `${API_URL}/v3/orgs/${getAccount()}/chat/?sort_by=last_modified_at&limit=20&offset=${get().chatsOffset}&sort_ascending=false`,
         {
           credentials: 'include',
           headers: getAuthHeaders(),
-        },
+        }
       )
-      checkResponseError(response)
-      const data = await response.json()
-      const newChats: Chat[] = data.data.filter(
+      checkResponseError(allChatsResponse)
+      const allChatsData = await allChatsResponse.json()
+      const newChats: Chat[] = allChatsData.data.filter(
         (chat: Chat) => !get().chats.find((c) => c.id === chat.id),
       )
       const chats = [...get().chats, ...newChats].sort(
@@ -195,12 +247,12 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
           Date.parse(b.last_modified_at) - Date.parse(a.last_modified_at),
       )
       set({
-        totalChats: data.total,
+        totalChats: allChatsData.total,
         chatsOffset: chats.length,
         chats: chats,
       })
-    } catch (e: any) {
-      console.error('Failed to fetch chats:', e.message)
+    } catch (error: any) {
+      console.error('Failed to fetch chats:', error.message)
     }
   },
   fetchChatUpdate: async (id) => {
@@ -214,21 +266,21 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       )
       checkResponseError(response)
       const data = await response.json()
-      get().updateChat(id, data)
-    } catch (e: any) {
-      console.error('Failed to fetch chat update:', e.message)
+      get().updateLocalChatState(id, data)
+    } catch (error) {
+      console.error('Failed to fetch chat update:', error)
     }
   },
   fetchChatMessages: async () => {
     const state = useChatStore.getState()
-    if (!state.chats.find((chat) => chat.id === state.currentChatId)) {
+    if (!state.currentChat) {
       set({ currentChatMessages: [] })
       return
     }
     set({ loadingMessages: true })
     try {
       const response = await fetch(
-        `${API_URL}/v3/orgs/${getAccount()}/chat/${state.currentChatId}/messages?limit=1000`,
+        `${API_URL}/v3/orgs/${getAccount()}/chat/${state.currentChat.id}/messages?limit=1000`,
         {
           credentials: 'include',
           headers: getAuthHeaders(),
@@ -236,9 +288,17 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       )
       checkResponseError(response)
       const data = await response.json()
+
+      const messageWithFeedback = data.data.find(
+        (message: ChatMessage) => message.is_positive_admin_feedback === true
+      )
+
       get().setCurrentChatMessages(data.data)
-    } catch (e: any) {
-      console.error('Failed to fetch chat messages:', e.message)
+      if (messageWithFeedback) {
+        get().setActiveFeedback(messageWithFeedback.id)
+      }
+    } catch (error) {
+      console.error('Failed to fetch chat messages:', error)
     }
     set({ loadingMessages: false })
   },
@@ -258,11 +318,29 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
           offset: state.chatsOffset - 1,
         }
       })
-      if (get().currentChatId === id) {
+      if (get().currentChat?.id === id) {
         get().createNewChat()
       }
-    } catch (e: any) {
-      console.error(e.message)
+    } catch (error) {
+      console.error(error)
+    }
+  },
+  cloneChat: async (id) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/chat/${id}/clone`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: getAuthHeaders(),
+        },
+      )
+      checkResponseError(response)
+      const data = await response.json()
+      get().addChat(data)
+      get().setCurrentChat(data)
+    } catch (error) {
+      console.error('Failed to clone chat:', error)
     }
   },
   fetchSuggestions: async () => {
@@ -277,8 +355,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       checkResponseError(response)
       const data = await response.json()
       set({ suggestions: data })
-    } catch (e: any) {
-      console.error('Failed to fetch account suggestions:', e.message)
+    } catch (error) {
+      console.error('Failed to fetch account suggestions:', error)
     }
   },
   removeTemporaryMessages: (chatId: string) => {
@@ -303,18 +381,17 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
     }
   },
   sendMessage: async (message) => {
-    const currentChatId = useChatStore.getState().currentChatId
-    get().setInputState(currentChatId, 'loading')
+    const tempMessageId = `temp-${uuidv4()}`    
+    const chatId = get().currentChat?.id ?? `temp-${uuidv4()}`
+    get().setInputState(chatId, 'loading')
+    get().removeTemporaryMessages(chatId)
 
-    const tempChatId = `temp-${uuidv4()}`
-    const tempMessageId = `temp-${uuidv4()}`
-
+    // Eagerly add the user message to the chat
     get().addChatMessage({
       id: tempMessageId,
-      chat_id: currentChatId,
+      chat_id: chatId,
       markdown: message,
       sending_agent: 'user',
-      receiving_agent: 'planner_agent',
       response_index: 0,
       timestamp: new Date().toISOString(),
       render_type: 'STANDARD',
@@ -322,10 +399,9 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
 
     get().addChatMessage({
       id: 'loading', // used to show loading
-      chat_id: currentChatId,
+      chat_id: chatId,
       markdown: 'Getting answer',
       sending_agent: 'planning_agent',
-      receiving_agent: 'user',
       response_index: 0,
       timestamp: new Date().toISOString(),
       render_type: 'LOADING',
@@ -339,45 +415,71 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       message_text: message,
     }
 
-    if (currentChatId) {
-      body['chat_id'] = currentChatId
-    }
-    get().removeTemporaryMessages(currentChatId)
-    if (get().currentChatId === '') {
-      get().setInputState('', 'disabled')
-      get().setCurrentChatId(tempChatId, false)
-      get().setInputState(tempChatId, 'loading')
-      get().addChat({
-        id: tempChatId,
+    if (get().currentChat?.id) {
+      body['chat_id'] = chatId
+      get().setInputState(chatId, 'interrupt')
+    } else {
+      get().setInputState(chatId, 'disabled')
+      const tempChat = {
+        id: chatId,
         name: 'Untitled Chat',
         last_modified_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        creator_id: 'app',
-      })
-    } else {
-      get().setInputState(get().currentChatId, 'interrupt')
-    }
-
-    const response = await fetch(
-      `${API_URL}/v3/orgs/${getAccount()}/messages/`,
-      {
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
+        creator: {
+          id: '',
+          name: '',
+          avatar: null,
         },
-        credentials: 'include',
-      },
-    )
-
-    await get().handleResponse(response, tempChatId, tempMessageId)
+        is_feedback_chat: false,
+      }
+      get().addChat(tempChat)
+      get().setCurrentChat(tempChat, false)
+      get().setInputState(chatId, 'loading')
+    }
+    get().postMessage(JSON.stringify(body), chatId, tempMessageId)
+  },
+  postMessage: async (body: string, chatId: string, tempMessageId: string, attempt: number = 0) => {
+    try {
+      if (attempt > 0) {
+        // If we are trying to reconnect we don't send message text.
+        body = JSON.stringify({
+          message_text: null,
+          chat_id: get().getUpdatedChatId(chatId)
+        })
+      }
+      const response = await fetch(
+        `${API_URL}/v3/orgs/${getAccount()}/messages/`,
+        {
+          method: 'POST',
+          body: body,
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          credentials: 'include',
+        },
+      )
+      if (response.status === 201 || response.status === 409) {
+        await get().handleResponse(response, chatId, tempMessageId)
+      } else {
+        get().handleStreamFail(get().getUpdatedChatId(chatId))
+      }
+    } catch (error) {
+      if (attempt < 5) {
+        // Recursively try to reconnect w/ exponential backoff
+        setTimeout(() => {
+          get().postMessage(body, chatId, tempMessageId, attempt + 1)
+        }, 2 ** attempt * 250)
+      } else {
+        get().handleStreamFail(get().getUpdatedChatId(chatId))
+      }
+    }
   },
   handleStreamEnd: async (chatId: string) => {
     get().setInputState(chatId, 'send')
     get().removeTemporaryMessages(chatId)
     get().fetchChatUpdate(chatId)
-    if (chatId === get().currentChatId) {
+    if (chatId === get().currentChat?.id) {
       set({
         currentChatMessages: get()
           .currentChatMessages.filter((message) => message.chat_id === chatId)
@@ -385,15 +487,21 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       })
     }
   },
+  handleStreamFail: async (chatId: string) => {
+    get().setInputState(chatId, 'send')
+    get().removeTemporaryMessages(chatId)
+    get().removeLoadingMessage(chatId)
+    get().fetchChatMessages()
+  },
   handleResponse: async (
     response: Response,
-    tempChatId: string,
+    chatId: string,
     tempMessageId: string,
   ) => {
     const reader = response.body?.getReader()
     const decoder = new TextDecoder('utf-8')
 
-    let thisChatId = tempChatId
+    let thisChatId = chatId
 
     if (!reader) {
       console.error('No reader found')
@@ -422,45 +530,26 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
           let message: ChatMessage
           try {
             message = JSON.parse(subchunk)
-          } catch (e) {
+          } catch {
             bufferedChunk += subchunk
 
             try {
               message = JSON.parse(bufferedChunk)
               bufferedChunk = ''
-            } catch (e) {
-              console.error('Error parsing subchunk \n', bufferedChunk, '\n', e)
+            } catch (error) {
+              console.error('Error parsing subchunk \n', bufferedChunk, '\n', error)
               continue
             }
           }
 
           // We remove the temporary chat and replace it with the chat data given by the api
-          if (message.chat_id && thisChatId === tempChatId) {
-            const currentInputState = get().inputState.get(tempChatId)
-            const response = await fetch(
-              `${API_URL}/v3/orgs/${getAccount()}/chat/${message.chat_id}`,
-              {
-                credentials: 'include',
-                headers: getAuthHeaders(),
-              },
-            )
-            const data = await response.json()
-            data.name ??= 'Untitled Chat'
-            get().setInputState(message.chat_id, currentInputState ?? 'send')
-            get().updateChat(tempChatId, data)
-
-            if (get().currentChatId === tempChatId) {
-              get().setCurrentChatId(message.chat_id, false)
-            }
-
+          if (message.chat_id && thisChatId !== message.chat_id) {
+            await get().updateChatId(thisChatId, message.chat_id)
             thisChatId = message.chat_id
-            get().setInputState(message.chat_id, 'interrupt')
+            get().setInputState(thisChatId, 'interrupt')
           }
 
-          if (
-            message.chat_id !== get().currentChatId &&
-            get().currentChatId !== tempChatId
-          ) {
+          if (message.chat_id !== get().currentChat?.id) {
             continue
           }
 
@@ -486,6 +575,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       }
     }
   },
+  activeFeedbackId: null,
+  setActiveFeedback: (messageId) => set({ activeFeedbackId: messageId }),
 }))
 
 export const getContent = () => {

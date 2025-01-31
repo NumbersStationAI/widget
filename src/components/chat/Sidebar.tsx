@@ -1,27 +1,39 @@
-import NewChatButton from 'components/chat/NewChatButton'
 import { Button } from 'components/Button'
-import { ReactComponent as OpenExternal } from 'lib/icons/open-external.svg'
+import NewChatButton from 'components/chat/NewChatButton'
+import Spinner from 'components/Spinner'
+import { APP_URL } from 'lib/constants'
 import { ReactComponent as FullLogo } from 'lib/icons/full-logo.svg'
 import { ReactComponent as Logo } from 'lib/icons/logo.svg'
-
+import { ReactComponent as OpenExternal } from 'lib/icons/open-external.svg'
 import { Chat } from 'lib/models/chat'
 import { useChatStore } from 'lib/stores/chat'
-import SidebarButton from './SidebarButton'
-import { getAccount } from 'lib/stores/user'
-import { APP_URL } from 'lib/constants'
-import ChatListItem from './ChatListItem'
 import { useCustomizationStore } from 'lib/stores/customization'
+import { getAccount } from 'lib/stores/user'
+import { useEffect, useRef } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import Spinner from 'components/Spinner'
+import { ChatListItem } from './ChatListItem'
+import SidebarButton from './SidebarButton'
 
-interface Props {
+interface SidebarProps {
   onChatSelected: (chat: Chat) => void
 }
 
-const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
-  const { chats, currentChatId, totalChats, chatsOffset, fetchChats } =
-    useChatStore()
+export function Sidebar({ onChatSelected = () => { } }: SidebarProps) {
+  const { chats, currentChat, totalChats, chatsOffset, fetchChats } = useChatStore()
   const { showOpenInFullButton } = useCustomizationStore()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new ResizeObserver(([entry]) => {
+      const { clientHeight, scrollHeight } = entry.target
+      if (clientHeight === scrollHeight && totalChats > chatsOffset) fetchChats()
+    })
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [totalChats, chatsOffset, fetchChats])
 
   return (
     <div className='group/sidebar flex h-screen max-h-screen w-[75vw] flex-col gap-4 bg-white pb-1 transition-all md:w-full'>
@@ -39,6 +51,7 @@ const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
         <NewChatButton expanded className='h-10 w-full' />
       </div>
       <div
+        ref={containerRef}
         className='flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-2'
         id='scrollableDiv'
       >
@@ -68,13 +81,13 @@ const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
       <div className='h-fit px-4'>
         {showOpenInFullButton && (
           <a
-            href={`${APP_URL}/${getAccount()}/widget/${currentChatId}`}
+            href={`${APP_URL}/${getAccount()}/widget/${currentChat?.id}`}
             target='_blank'
             rel='noreferrer'
             className='!no-underline'
           >
             <Button
-              variant={'ghost'}
+              variant='ghost'
               className='flex w-full items-center justify-start gap-2 px-3 text-sm'
             >
               <OpenExternal />
@@ -89,5 +102,3 @@ const Sidebar: React.FC<Props> = ({ onChatSelected = () => {} }) => {
     </div>
   )
 }
-
-export default Sidebar

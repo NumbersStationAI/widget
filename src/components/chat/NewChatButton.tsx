@@ -13,13 +13,13 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const NewChatButton: React.FC<Props> = ({ className, onSubmit, expanded }) => {
-  const { setCurrentChatId } = useChatStore()
+  const { createNewChat } = useChatStore()
   const [editor] = useLexicalComposerContext()
 
   return (
     <Button
       onClick={() => {
-        setCurrentChatId('')
+        createNewChat()
         if (!useLayoutStore.getState().expanded) {
           useLayoutStore.getState().setShowSidebar(false)
         }

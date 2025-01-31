@@ -7,7 +7,6 @@ export interface ChatMessage {
   render_type: string
   signal_type?: any
   sending_agent: string
-  receiving_agent: string
   timestamp: string
   markdown: any
   questions?: Suggestion[] | null
@@ -25,4 +24,7 @@ export interface ChatMessage {
   streaming?: boolean
   is_positive_feedback?: boolean
   is_positive_admin_feedback?: boolean
+  is_last_user_message_for_feedback_chat?: boolean
+  rephrased_user_question?: string | null
+  feedback_chat_id?: string | null
 }

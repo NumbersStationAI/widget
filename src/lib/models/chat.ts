@@ -3,9 +3,8 @@ export interface Chat {
   name: string
   created_at: string
   last_modified_at: string
-  creator_id?: string
-  creator?: Creator
-  tasks?: any[]
+  creator: Creator
+  is_feedback_chat: boolean
 }
 
 export interface Creator {

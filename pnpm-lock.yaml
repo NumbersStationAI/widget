@@ -61,6 +61,9 @@ dependencies:
   '@react-hook/size':
     specifier: ^2.1.2
     version: 2.1.2(react@18.3.1)
+  '@tanstack/react-query':
+    specifier: ^5.62.11
+    version: 5.62.11(react@18.3.1)
   '@tanstack/react-table':
     specifier: ^8.20.5
     version: 8.20.5(react-dom@18.3.1)(react@18.3.1)
@@ -4686,6 +4689,19 @@ packages:
       postcss-selector-parser: 6.0.10
       tailwindcss: 3.4.14
     dev: true
+
+  /@tanstack/query-core@5.62.9:
+    resolution: {integrity: sha512-lwePd8hNYhyQ4nM/iRQ+Wz2cDtspGeZZHFZmCzHJ7mfKXt+9S301fULiY2IR2byJYY6Z03T427E5PoVfMexHjw==}
+    dev: false
+
+  /@tanstack/react-query@5.62.11(react@18.3.1):
+    resolution: {integrity: sha512-Xb1nw0cYMdtFmwkvH9+y5yYFhXvLRCnXoqlzSw7UkqtCVFq3cG8q+rHZ2Yz1XrC+/ysUaTqbLKJqk95mCgC1oQ==}
+    peerDependencies:
+      react: ^18 || ^19
+    dependencies:
+      '@tanstack/query-core': 5.62.9
+      react: 18.3.1
+    dev: false
 
   /@tanstack/react-table@8.20.5(react-dom@18.3.1)(react@18.3.1):
     resolution: {integrity: sha512-WEHopKw3znbUZ61s9i0+i9g8drmDo6asTWbrQh8Us63DAk/M0FkmIqERew6P71HI75ksZ2Pxyuf4vvKh9rAkiA==}

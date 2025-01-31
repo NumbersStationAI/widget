@@ -43,6 +43,7 @@ function widgetApi() {
       script.getAttribute('data-show-minimize-button') ?? 'true'
     const showExpandButton =
       script.getAttribute('data-show-expand-button') ?? 'true'
+    const parentElementId = script.getAttribute('data-parent-element-id')
     const args = {
       account: account,
       showOpenInFullButton: showOpenInFullButton,
@@ -101,7 +102,7 @@ function widgetApi() {
     iframe.border = 'border: 4px solid black'
     iframeStyle.display = 'block'
     iframeStyle.boxSizing = 'borderBox'
-    iframeStyle.position = 'absolute'
+    iframeStyle.position = parentElementId ? 'static' : 'absolute'
     iframeStyle.right = 0
     iframeStyle.bottom = '0rem'
     iframeStyle.border = 0
@@ -118,8 +119,19 @@ function widgetApi() {
     iframeStyle.borderRadius = borderRadius ?? '12px'
     iframeStyle.background = 'white'
 
-    widget.appendChild(button)
-    widget.appendChild(iframe)
+    if (!parentElementId) {
+      widget.appendChild(button)
+      widget.appendChild(iframe)
+    } else {
+      const parentElement = document.getElementById(parentElementId)
+      if (!parentElement) {
+        console.error(`The Numbers Station widget couldn't find the element 
+          with ID ${parentElementId}. Please make sure it exists before using 
+          the parent ID widget option.`)
+        return
+      }
+      parentElement.appendChild(iframe)
+    }
 
     const hide = () => {
       iframeStyle.height = '0rem'
@@ -129,8 +141,8 @@ function widgetApi() {
 
     const show = () => {
       if (expanded) {
-        iframeStyle.height = 'calc(100vh)'
-        iframeStyle.width = 'calc(100vw)'
+        iframeStyle.height = parentElementId ? '100%' : 'calc(100vh)'
+        iframeStyle.width = parentElementId ? '100%' : 'calc(100vw)'
         iframeStyle.marginRight = '0rem'
         iframeStyle.marginBottom = '0rem'
         iframeStyle.maxWidth = 'calc(100vw)'
@@ -147,6 +159,7 @@ function widgetApi() {
       }
       iframeStyle.opacity = 1
     }
+    show()
 
     const api = {
       sendMessage: (message) => {
@@ -270,7 +283,9 @@ function widgetApi() {
       buttonStyle.scale = '1'
     })
 
-    document.body.appendChild(widget)
+    if (!parentElementId) {
+      document.body.appendChild(widget)
+    }
   }
 
   if (document.readyState === 'complete') {
