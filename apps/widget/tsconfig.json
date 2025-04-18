@@ -1,0 +1,19 @@
+{
+  "extends": "@ns/typescript-config/base.json",
+  "compilerOptions": {
+    "baseUrl": "src",
+    "outDir": "./dist",
+    "rootDir": "../../",
+    "paths": {
+      "@ns/api-client": ["./client.ts"],
+      "@ns/public-api": ["../../../packages/public-api/kubb/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite.env.d.ts",
+    "vite.config.ts",
+    "../../packages/public-api/kubb/**/*"
+  ]
+}

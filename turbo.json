@@ -1,0 +1,78 @@
+{
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "build:api",
+        "^build"
+      ],
+      "env": [
+        "APP_URL",
+        "API_URL"
+      ],
+      "outputs": [
+        "build/**",
+        "public/build/**",
+        "kubb/**"
+      ]
+    },
+    "build:api": {
+      "dependsOn": [],
+      "inputs": [
+        "openapi.json"
+      ],
+      "outputs": [
+        "app/api/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "dependsOn": [
+        "@ns/public-api#build"
+      ],
+      "env": [
+        "PORT",
+        "REMIX_PORT",
+        "REMIX_DEV_PORT",
+        "REMIX_DEV_ORIGIN",
+        "PROFILE",
+        "CURRENT_ENV",
+        "TITLE",
+        "WIDGET_URL",
+        "APP_URL",
+        "API_URL",
+        "LOG_LEVEL",
+        "SHOW_REACT_QUERY_DEV_TOOLS",
+        "CSP_FRAME_ANCESTORS",
+        "AUTH_PROVIDER",
+        "SIGNUP"
+      ],
+      "persistent": true
+    },
+    "format": {
+      "dependsOn": []
+    },
+    "generate": {
+      "dependsOn": [],
+      "env": [
+        "API_URL"
+      ],
+      "inputs": [
+        ".env",
+        "../../../backend/web/mlcore_web/**"
+      ],
+      "outputs": [
+        "openapi.json"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "@ns/public-api#build"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "@ns/public-api#build"
+      ]
+    }
+  }
+}

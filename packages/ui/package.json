@@ -1,0 +1,45 @@
+{
+  "name": "@ns/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./utils/*": "./utils/*.ts",
+    "./icons/*": "./icons/*.tsx",
+    "./atoms/*": "./atoms/*.tsx",
+    "./molecules/*": "./molecules/*.tsx"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier . --write"
+  },
+  "prettier": "@ns/prettier-config",
+  "peerDependencies": {
+    "@lexical/react": "^0.27.2",
+    "lexical": "^0.27.2",
+    "lexical-beautiful-mentions": "^0.1.47",
+    "@remix-run/react": "^2.14.0"
+  },
+  "dependencies": {
+    "@ns/prettier-config": "workspace:*",
+    "@ns/public-api": "workspace:*",
+    "@ns/eslint-config": "workspace:*",
+    "@ns/typescript-config": "workspace:*",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "class-variance-authority": "^0.7.0",
+    "tailwind-merge": "^2.5.4",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3"
+  }
+}

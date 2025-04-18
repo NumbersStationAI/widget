@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": true,
+    "incremental": true,
+    "module": "ESNext",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "target": "ES2019",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
