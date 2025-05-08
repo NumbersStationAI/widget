@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "mlcore_web",
-    "version": "188.17.6"
+    "version": "192.1.2"
   },
   "paths": {
     "/api/v1/login/access-token": {
@@ -1192,10 +1192,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "The name of the organization or account.",
               "title": "Account Name"
-            },
-            "description": "The name of the organization or account."
+            }
           },
           {
             "name": "chat_id",
@@ -3441,6 +3439,439 @@
           }
         }
       }
+    },
+    "/api/v3/orgs/{account_name}/deep_research_plan/": {
+      "post": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Create Deep Research Plan",
+        "description": "Create a chat. This will not send a message to the chat.\n\nNote that you can also create a chat using the send message endpoint. Doing so will\nlet you skip making a separate call to create the chat.",
+        "operationId": "create_deep_research_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "question",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Question"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeepResearchPlanSchema-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepResearchPlanInDBBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Get Deep Research Plans (Experimental \ud83e\uddea)",
+        "description": "Get all deep research plans.\n\nWARNING: This endpoint is experimental and its behavior may change without warning.",
+        "operationId": "get_deep_research_plans",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeepResearchPlanInDBBase"
+                  },
+                  "title": "Response Get Deep Research Plans Api V3 Orgs  Account Name  Deep Research Plan  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/orgs/{account_name}/deep_research_plan/{deep_research_plan_id}": {
+      "get": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Get Deep Research Plan",
+        "description": "Get a deep research plan by ID.",
+        "operationId": "get_deep_research_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deep_research_plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deep Research Plan Id"
+            }
+          },
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepResearchPlanInDBBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Delete Deep Research Plan",
+        "description": "Delete a deep research plan by ID.",
+        "operationId": "delete_deep_research_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deep_research_plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deep Research Plan Id"
+            }
+          },
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepResearchPlanInDBBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Update Deep Research Plan",
+        "description": "Update a deep research plan by ID.",
+        "operationId": "update_deep_research_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deep_research_plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deep Research Plan Id"
+            }
+          },
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeepResearchPlanUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepResearchPlanInDBBase"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "deep_research_plan"
+        ],
+        "summary": "Create Chat from Deep Research Plan (Experimental \ud83e\uddea)",
+        "description": "Create a chat from a deep research plan.\n\nWARNING: This endpoint is experimental and its behavior may change without warning.",
+        "operationId": "create_chat_from_deep_research_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deep_research_plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deep Research Plan Id"
+            }
+          },
+          {
+            "name": "account_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The name of the organization or account.",
+              "title": "Account Name"
+            },
+            "description": "The name of the organization or account."
+          },
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "title": "Session Id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatAPIResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4039,6 +4470,165 @@
         "title": "DataPage",
         "description": "Paginated data response."
       },
+      "DeepResearchPlanInDBBase": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Account Id"
+          },
+          "creator_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Creator Id"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/DeepResearchPlanSchema-Output"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id"
+          },
+          "sync_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Sync Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "creator_id",
+          "question",
+          "plan",
+          "id",
+          "sync_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DeepResearchPlanInDBBase",
+        "description": "Base class to map Pydantic DeepResearchPlan to ORM."
+      },
+      "DeepResearchPlanSchema-Input": {
+        "properties": {
+          "plan_title": {
+            "type": "string",
+            "title": "Plan Title",
+            "description": "The title of the research plan. This is used to identify the plan."
+          },
+          "plan_steps": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchStep-Input"
+            },
+            "type": "array",
+            "title": "Plan Steps",
+            "description": "The research plan as a list of main goals with distinct analytics questions to answer for each goal."
+          },
+          "plan_goal": {
+            "type": "string",
+            "title": "Plan Goal",
+            "description": "The main research goal. This is used to help generate the final report.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_title",
+          "plan_steps"
+        ],
+        "title": "DeepResearchPlanSchema",
+        "description": "Parameters for the verify plan tool."
+      },
+      "DeepResearchPlanSchema-Output": {
+        "properties": {
+          "plan_title": {
+            "type": "string",
+            "title": "Plan Title",
+            "description": "The title of the research plan. This is used to identify the plan."
+          },
+          "plan_steps": {
+            "items": {
+              "$ref": "#/components/schemas/mlcore_web__schemas__deep_research_plan__ResearchStep-Output"
+            },
+            "type": "array",
+            "title": "Plan Steps",
+            "description": "The research plan as a list of main goals with distinct analytics questions to answer for each goal."
+          },
+          "plan_goal": {
+            "type": "string",
+            "title": "Plan Goal",
+            "description": "The main research goal. This is used to help generate the final report.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_title",
+          "plan_steps"
+        ],
+        "title": "DeepResearchPlanSchema",
+        "description": "Parameters for the verify plan tool."
+      },
+      "DeepResearchPlanUpdate": {
+        "properties": {
+          "sync_id": {
+            "title": "Sync Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "question": {
+            "title": "Question",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeepResearchPlanSchema-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DeepResearchPlanUpdate",
+        "description": "Properties to use in CRUD for updating."
+      },
       "DeepResearchPlanVerifyParameters": {
         "properties": {
           "plan_title": {
@@ -4048,18 +4638,24 @@
           },
           "plan_steps": {
             "items": {
-              "$ref": "#/components/schemas/ResearchStep"
+              "$ref": "#/components/schemas/mlcore_web__mlcore__agents__v3__tools__deep_research_tools__ResearchStep"
             },
             "type": "array",
             "title": "Plan Steps",
             "description": "The research plan as a list of main goals with distinct analytics questions to answer for each goal."
+          },
+          "plan_goal": {
+            "type": "string",
+            "title": "Plan Goal",
+            "description": "The main research goal. This is used to help generate the final report."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "plan_title",
-          "plan_steps"
+          "plan_steps",
+          "plan_goal"
         ],
         "title": "DeepResearchPlanVerifyParameters",
         "description": "Parameters for the verify plan tool."
@@ -4666,7 +5262,7 @@
         "title": "ResearchInstruction",
         "description": "Instruction with ID."
       },
-      "ResearchStep": {
+      "ResearchStep-Input": {
         "properties": {
           "section_header": {
             "type": "string",
@@ -4876,6 +5472,52 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "mlcore_web__mlcore__agents__v3__tools__deep_research_tools__ResearchStep": {
+        "properties": {
+          "section_header": {
+            "type": "string",
+            "title": "Section Header",
+            "description": "The main goal for this research step as a high level header to present to the user."
+          },
+          "instructions": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchInstruction"
+            },
+            "type": "array",
+            "title": "Instructions",
+            "description": "The list of analytics questions for the research step."
+          }
+        },
+        "type": "object",
+        "required": [
+          "section_header",
+          "instructions"
+        ],
+        "title": "ResearchStep"
+      },
+      "mlcore_web__schemas__deep_research_plan__ResearchStep-Output": {
+        "properties": {
+          "section_header": {
+            "type": "string",
+            "title": "Section Header",
+            "description": "The main goal for this research step as a high level header to present to the user."
+          },
+          "instructions": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchInstruction"
+            },
+            "type": "array",
+            "title": "Instructions",
+            "description": "The list of analytics questions for the research step."
+          }
+        },
+        "type": "object",
+        "required": [
+          "section_header",
+          "instructions"
+        ],
+        "title": "ResearchStep"
       }
     }
   }

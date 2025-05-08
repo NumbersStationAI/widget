@@ -2,9 +2,8 @@ import MarkdownLib, { type MarkdownToJSX } from 'markdown-to-jsx'
 import { useMemo } from 'react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 
-import { cn } from '@ns/ui/utils/cn'
-
-import { codeStyle } from 'components/codeStyle'
+import { cn } from '../utils/cn'
+import { codeStyle } from '../utils/codeStyle'
 
 interface HighlightedCodeProps {
   children: string
@@ -60,7 +59,6 @@ function Link({ href, children }: { href: string; children: string }) {
       </a>
     )
   } catch (error) {
-    console.warn('An invalid link was found:', href)
     return <span>{children}</span>
   }
 }

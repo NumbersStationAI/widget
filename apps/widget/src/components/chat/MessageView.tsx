@@ -2,10 +2,10 @@ import useSize from '@react-hook/size'
 import { CircleAlert, InfoIcon } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
+import { Alert, AlertDescription } from '@ns/ui/atoms/Alert'
+import { Spinner } from '@ns/ui/atoms/Spinner'
 import { cn } from '@ns/ui/utils/cn'
 
-import { Alert, AlertDescription } from 'components/Alert'
-import { Spinner } from 'components/Spinner'
 import { Suggestions } from 'components/Suggestions'
 import { type ChatMessage } from 'lib/models/message'
 import { useChatStore } from 'lib/stores/chat'
@@ -100,6 +100,7 @@ export default function MessageView() {
     }
     return chatIndices
   }, [messageGroups, feedbackChatId])
+
   return (
     <div
       ref={viewRef}

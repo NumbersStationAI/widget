@@ -10,8 +10,8 @@ import {
   useCheckFeedbackChatHasAdminFeedback,
   useGetChat,
 } from '@ns/public-api'
+import { Button } from '@ns/ui/atoms/Button'
 
-import { Button } from 'components/Button'
 import { useLayoutStore } from 'lib/stores/layout'
 import { usePanelChatStore } from 'lib/stores/panelChat'
 import { getAccount } from 'lib/stores/user'

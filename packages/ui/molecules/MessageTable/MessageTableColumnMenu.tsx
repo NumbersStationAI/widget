@@ -1,3 +1,4 @@
+import { type Column } from '@tanstack/react-table'
 import copy from 'copy-to-clipboard'
 import {
   ArrowDown,
@@ -16,11 +17,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from 'components/Dropdown'
+} from '../../atoms/DropdownMenu'
 
-interface DataTableColumnMenuProps {
+export interface MessageTableColumnMenuProps<RowT> {
   columnKey: string
-  column: any
+  column: Column<RowT, unknown>
   sort: ColumnSort | undefined
   sortedColumns: ColumnSort[]
   setSortedColumns: (columns: ColumnSort[]) => void
@@ -32,26 +33,26 @@ export interface ColumnSort {
   direction: 'asc' | 'desc'
 }
 
-export default function DataTableColumnMenu({
+export function MessageTableColumnMenu<RowT>({
   column,
   columnKey,
   sort,
   sortedColumns,
   setSortedColumns,
   setLoadingType,
-}: DataTableColumnMenuProps) {
+}: MessageTableColumnMenuProps<RowT>) {
   const setColumnSorting = useCallback(
-    (column: string, direction: 'asc' | 'desc') => {
+    (col: string, direction: 'asc' | 'desc') => {
       setLoadingType()
-      setSortedColumns([{ column, direction }])
+      setSortedColumns([{ column: col, direction }])
     },
     [setLoadingType, setSortedColumns],
   )
 
   const clearColumnSorting = useCallback(
-    (column: string) => {
+    (col: string) => {
       setLoadingType()
-      const index = sortedColumns.findIndex((c) => c.column === column)
+      const index = sortedColumns.findIndex((c) => c.column === col)
       if (index !== -1) {
         setSortedColumns([])
       }

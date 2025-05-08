@@ -1,3 +1,4 @@
+import { TooltipButton } from '@ns/ui/atoms/Button'
 import { MentionsMenu, MentionsMenuItem } from '@ns/ui/molecules/MentionsMenu'
 import {
   type AGENT_TRIGGER,
@@ -7,7 +8,6 @@ import {
   useMentionsState,
 } from '@ns/ui/utils/mentions'
 
-import { TooltipButton } from 'components/Button'
 import { Popover, PopoverContent, PopoverTrigger } from 'components/Popover'
 import { useEnabledAgentNames } from 'lib/stores/customization'
 import { getAccount } from 'lib/stores/user'

@@ -3,8 +3,8 @@ const { fontFamily } = require('tailwindcss/defaultTheme')
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    '../../packages/ui/atoms/*.{js,jsx,ts,tsx}',
-    '../../packages/ui/molecules/*.{js,jsx,ts,tsx}',
+    '../../packages/ui/atoms/**/*.{js,jsx,ts,tsx}',
+    '../../packages/ui/molecules/**/*.{js,jsx,ts,tsx}',
     './src/**/*.{js,jsx,ts,tsx}',
   ],
   darkMode: ['class'],

@@ -1,7 +1,9 @@
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Atom, AtSign, Hash, Paperclip } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 
 import { sendInterrupt } from '@ns/public-api'
+import { Button, TooltipButton } from '@ns/ui/atoms/Button'
 import {
   MessageRichTextInput,
   MessageRichTextInputContent,
@@ -15,7 +17,6 @@ import {
   useMentionItems,
 } from '@ns/ui/utils/mentions'
 
-import { Button, TooltipButton } from 'components/Button'
 import { useChatStore } from 'lib/stores/chat'
 import {
   useCustomizationStore,
@@ -44,7 +45,11 @@ export default function ChatInput() {
   } = useCustomizationStore()
 
   const [file, setFile] = useState<File>()
-  const [deepResearch, setDeepResearch] = useState(false)
+
+  const navigate = useNavigate({ from: '/chats' })
+  const setDeepResearch = (deepResearch: boolean) =>
+    navigate({ search: (prev) => ({ ...prev, deepResearch }) })
+  const { deepResearch } = useSearch({ from: '/_widget/chats' })
 
   const handleInterrupt = useCallback(async () => {
     if (!currentChat) return
@@ -56,7 +61,15 @@ export default function ChatInput() {
     setInputValue('')
     sendMessage(inputValue, deepResearch, file)
     setFile(undefined)
-  }, [sendMessage, deepResearch, file, setFile, inputValue, setInputValue])
+  }, [
+    sendMessage,
+    deepResearch,
+    file,
+    setFile,
+    inputValue,
+    setInputValue,
+    setDeepResearch,
+  ])
 
   const handleSubmit = useCallback(
     (keyboardCommand = false) => {
@@ -133,7 +146,7 @@ export default function ChatInput() {
             )}
             {!isFeedbackChat && showDeepResearchButton && (
               <DeepResearchButton
-                value={deepResearch}
+                value={deepResearch ?? false}
                 onValueChange={setDeepResearch}
               />
             )}

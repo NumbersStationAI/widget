@@ -6,12 +6,11 @@ import { toast } from 'sonner'
 import { useExplainSqlMessage } from '@ns/public-api'
 import { cn } from '@ns/ui/utils/cn'
 
-import { Button, TooltipButton } from 'components/Button'
+import { Button, TooltipButton } from '../../atoms/Button'
+import { Sheet, SheetClose, SheetContent } from '../../atoms/Sheet'
+import { Spinner } from '../../atoms/Spinner'
 /* eslint-disable-next-line import/no-cycle */
-import MessageMarkdown from 'components/chat/messages/MessageMarkdown'
-import { Sheet, SheetClose, SheetContent } from 'components/Sheet'
-import { Spinner } from 'components/Spinner'
-import { getAccount } from 'lib/stores/user'
+import { MessageMarkdown } from '../MessageMarkdown'
 
 function formatExplanationToString(text: string): string {
   return text
@@ -22,9 +21,15 @@ function formatExplanationToString(text: string): string {
     .join('\n')
 }
 
-export function ExplanationSheet({ messageId }: { messageId: string }) {
+export function ExplanationSheet({
+  accountName,
+  messageId,
+}: {
+  accountName: string
+  messageId: string
+}) {
   const { data, isPending, error } = useExplainSqlMessage({
-    accountName: getAccount(),
+    accountName,
     messageId,
   })
   const [{ open, isFullscreen }, setState] = useState({
@@ -89,6 +94,8 @@ export function ExplanationSheet({ messageId }: { messageId: string }) {
             </span>
           ) : (
             <MessageMarkdown
+              accountName={accountName}
+              viewportWidth={undefined}
               className={cn(
                 '[&>:first-child]:mt-0 [&>:last-child]:mb-0 [&>blockquote>p]:my-2 [&>blockquote]:my-4 [&>h1]:mb-4 [&>h1]:mt-8 [&>h2]:mb-4 [&>h2]:mt-6 [&>h3]:mb-3 [&>h3]:mt-4 [&>ol>li]:my-2 [&>ol]:my-4 [&>p]:my-4 [&>p]:leading-7 [&>ul>li]:my-2 [&>ul]:my-4',
               )}

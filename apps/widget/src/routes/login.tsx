@@ -4,7 +4,8 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Button } from 'components/Button'
+import { Button } from '@ns/ui/atoms/Button'
+
 import HideButton from 'components/chat/HideButton'
 import ErrorAlert from 'components/ErrorAlert'
 import {
@@ -16,8 +17,8 @@ import {
 } from 'components/Form'
 import { Input } from 'components/Input'
 import { Separator } from 'components/Separator'
-import { ReactComponent as Google } from 'lib/icons/google.svg?react'
-import { ReactComponent as Logo } from 'lib/icons/logo.svg?react'
+import Google from 'lib/icons/google.svg?react'
+import Logo from 'lib/icons/logo.svg?react'
 import { useCustomizationStore } from 'lib/stores/customization'
 import { useUserStore } from 'lib/stores/user'
 
@@ -51,7 +52,7 @@ function Login() {
     setIsSubmitting(false)
   }
 
-  if (user && !unauthorized) return <Navigate to='/' search />
+  if (user && !unauthorized) return <Navigate to='/$' search />
 
   return (
     <div className='relative flex h-full w-full flex-col items-center justify-between border border-border bg-white p-8'>

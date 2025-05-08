@@ -1,7 +1,8 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router'
 
-import { Button } from 'components/Button'
-import { Spinner } from 'components/Spinner'
+import { Button } from '@ns/ui/atoms/Button'
+import { Spinner } from '@ns/ui/atoms/Spinner'
+
 import { useUserStore } from 'lib/stores/user'
 
 export const Route = createFileRoute('/$')({ component: Index })

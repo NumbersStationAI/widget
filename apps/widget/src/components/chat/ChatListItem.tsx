@@ -3,15 +3,15 @@ import { Ellipsis } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { type ChatApiResponse } from '@ns/public-api'
-import { cn } from '@ns/ui/utils/cn'
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from 'components/Dropdown'
+} from '@ns/ui/atoms/DropdownMenu'
+import { cn } from '@ns/ui/utils/cn'
+
 import { useChatStore } from 'lib/stores/chat'
 
 interface ChatListItemProps {

@@ -3,8 +3,8 @@ import { ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getDeepResearchSummaryPdf } from '@ns/public-api'
+import { Button } from '@ns/ui/atoms/Button'
 
-import { Button } from 'components/Button'
 import { useChatStore } from 'lib/stores/chat'
 import { getAccount } from 'lib/stores/user'
 
@@ -17,7 +17,7 @@ export function ExportPDFButton({ messageId }: { messageId: string }) {
     )
     download(
       data as Blob,
-      `${currentChat?.name ?? 'Deep Research'} Summary.pdf`,
+      `${currentChat?.name ?? 'Deep Research'} Summary ${new Date().toLocaleString()}.pdf`,
       'application/pdf',
     )
   }

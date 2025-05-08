@@ -205,6 +205,7 @@ export function MessageRichTextInputMentionsPlugin({
       items={items}
       menuComponent={MenuComponent}
       menuItemComponent={MenuItemComponent}
+      menuItemLimit={false}
     />
   )
 }

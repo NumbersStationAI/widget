@@ -5,10 +5,10 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 
-import { Button } from 'components/Button'
-import { Spinner } from 'components/Spinner'
+import { Button } from '../../atoms/Button'
+import { Spinner } from '../../atoms/Spinner'
 
-interface DataTablePaginationProps {
+interface MessageTablePaginationProps {
   totalRowCount: number
   currentStartIndex: number
   rowsPerPage: number
@@ -19,7 +19,7 @@ interface DataTablePaginationProps {
   paginating: boolean
 }
 
-export function DataTablePagination({
+export function MessageTablePagination({
   totalRowCount,
   currentStartIndex,
   rowsPerPage,
@@ -28,7 +28,7 @@ export function DataTablePagination({
   onFirstPage,
   onLastPage,
   paginating,
-}: DataTablePaginationProps) {
+}: MessageTablePaginationProps) {
   const isFirstPage = currentStartIndex === 0
   const isLastPage = currentStartIndex + rowsPerPage >= totalRowCount
 
@@ -37,7 +37,7 @@ export function DataTablePagination({
       <div className='flex-1' />
       {paginating && <Spinner size={0.4} />}
       <div className='flex items-center gap-2'>
-        <div className='flex items-center justify-center text-sm font-medium text-foreground/75'>
+        <div className='text-foreground/75 flex items-center justify-center text-sm font-medium'>
           {currentStartIndex + 1}-
           {Math.min(currentStartIndex + rowsPerPage, totalRowCount)} of{' '}
           {totalRowCount}

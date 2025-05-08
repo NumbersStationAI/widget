@@ -2,10 +2,10 @@ import download from 'downloadjs'
 import { toast } from 'sonner'
 
 import { getChatSummaryPdf } from '@ns/public-api'
+import { Button } from '@ns/ui/atoms/Button'
 import { DEFAULT_CONVERSATION_NAME } from '@ns/ui/utils/constants'
 
-import { Button } from 'components/Button'
-import { ReactComponent as PDF } from 'lib/icons/pdf.svg?react'
+import PDF from 'lib/icons/pdf.svg?react'
 import { useChatStore } from 'lib/stores/chat'
 import { getAccount } from 'lib/stores/user'
 
@@ -18,7 +18,7 @@ export function DownloadPDFButton({ messageId }: { messageId: string }) {
     )
     download(
       data as Blob,
-      `${currentChat?.name ?? DEFAULT_CONVERSATION_NAME} Summary.pdf`,
+      `${currentChat?.name ?? DEFAULT_CONVERSATION_NAME} Summary ${new Date().toLocaleString()}.pdf`,
       'application/pdf',
     )
   }

@@ -9,21 +9,22 @@ import {
 } from 'react'
 
 import { RenderType } from '@ns/public-api'
-
-import { Button } from 'components/Button'
+import { Button } from '@ns/ui/atoms/Button'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from 'components/Collapsible'
-import { Spinner } from 'components/Spinner'
+} from '@ns/ui/atoms/Collapsible'
+import { Spinner } from '@ns/ui/atoms/Spinner'
+import { MessageMarkdown } from '@ns/ui/molecules/MessageMarkdown'
+import { getMessageKey } from '@ns/ui/utils/getMessageKey'
+
 import { type ChatMessage } from 'lib/models/message'
 import { useLayoutStore } from 'lib/stores/layout'
 import { usePanelChatStore } from 'lib/stores/panelChat'
-import { getMessageKey } from 'lib/utils/message'
+import { getAccount } from 'lib/stores/user'
 
 import { Message } from './messages/Message'
-import MessageMarkdown from './messages/MessageMarkdown'
 
 const PanelViewContext = createContext({
   activeInstructionId: '',
@@ -103,18 +104,18 @@ export function PanelView() {
   return (
     <PanelViewContext.Provider value={contextValue}>
       <div className='relative h-full'>
-        <div className='absolute right-3 top-3 z-10'>
-          <Button
-            variant='ghost'
-            size='sm'
-            aria-label='Close'
-            onClick={handleClose}
-          >
-            <X className='h-4 w-4' />
-          </Button>
-        </div>
         <div className='flex h-full flex-col overflow-auto p-4'>
-          <PanelHeader />
+          <div className='flex justify-between'>
+            <PanelHeader />
+            <Button
+              variant='ghost'
+              size='sm'
+              aria-label='Close'
+              onClick={handleClose}
+            >
+              <X className='h-4 w-4' />
+            </Button>
+          </div>
           {((isStreaming || loadingPanelMessages) && !activeInstructionId) ||
           (thinkingMessages.length === 0 && chatMessages.length === 0) ? (
             <div className='flex h-full flex-col items-center justify-center p-6 text-neutral-400'>
@@ -139,9 +140,14 @@ export function PanelView() {
 }
 
 function PanelHeader() {
+  const { viewportWidth } = useLayoutStore()
   const { activeinstructionName } = useContext(PanelViewContext)
   return (
-    <MessageMarkdown className='mb-4 text-lg font-medium'>
+    <MessageMarkdown
+      accountName={getAccount()}
+      viewportWidth={viewportWidth}
+      className='mb-4 text-lg font-medium'
+    >
       {activeinstructionName}
     </MessageMarkdown>
   )
@@ -181,6 +187,7 @@ function ThinkingSectionHeader({
   progressMessages: ChatMessage[]
   thinkingMessages: ChatMessage[]
 }) {
+  const { viewportWidth } = useLayoutStore()
   return (
     <CollapsibleTrigger asChild>
       <button
@@ -195,7 +202,10 @@ function ThinkingSectionHeader({
         {progressMessages.length === 0 ? (
           <span>Completed</span>
         ) : progressMessages[progressMessages.length - 1]?.markdown != null ? (
-          <MessageMarkdown>
+          <MessageMarkdown
+            accountName={getAccount()}
+            viewportWidth={viewportWidth}
+          >
             {progressMessages[progressMessages.length - 1].markdown ?? ''}
           </MessageMarkdown>
         ) : (
@@ -216,12 +226,17 @@ function ThinkingSectionContent({
   thinkingMessages: ChatMessage[]
   isStreaming: boolean
 }) {
+  const { viewportWidth } = useLayoutStore()
   return (
     <CollapsibleContent className='mb-6 mt-2.5 border-l-2 border-neutral-200 px-3'>
       {thinkingMessages.map((thinkingMessage, index, all) => (
         <Fragment key={thinkingMessage.id}>
           <div className='my-3'>
-            <MessageMarkdown className='text-neutral-400'>
+            <MessageMarkdown
+              accountName={getAccount()}
+              viewportWidth={viewportWidth}
+              className='text-neutral-400'
+            >
               {thinkingMessage.markdown ?? ''}
             </MessageMarkdown>
           </div>
@@ -240,7 +255,7 @@ function ResponseSection({ chatMessages }: { chatMessages: ChatMessage[] }) {
       {chatMessages.map((message) => (
         <Message
           message={message}
-          key={getMessageKey(message.id, message.response_index)}
+          key={getMessageKey(message)}
           isPopoverFeedbackChat={false}
         />
       ))}

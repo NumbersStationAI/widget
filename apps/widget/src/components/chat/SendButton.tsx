@@ -1,6 +1,7 @@
-import { Button } from 'components/Button'
-import { ReactComponent as Interrupt } from 'lib/icons/interrupt.svg?react'
-import { ReactComponent as Send } from 'lib/icons/send.svg?react'
+import { Button } from '@ns/ui/atoms/Button'
+
+import Interrupt from 'lib/icons/interrupt.svg?react'
+import Send from 'lib/icons/send.svg?react'
 
 interface Props {
   state: 'send' | 'interrupt' | 'disabled' | 'loading'

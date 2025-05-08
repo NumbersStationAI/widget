@@ -4,9 +4,8 @@ import {
   type FallbackProps,
 } from 'react-error-boundary'
 
+import { Button } from '@ns/ui/atoms/Button'
 import { ErrorBoundaryContent } from '@ns/ui/molecules/ErrorBoundaryContent'
-
-import { Button } from 'components/Button'
 
 function FallbackComponent({ error, resetErrorBoundary }: FallbackProps) {
   return (
@@ -23,7 +22,7 @@ export function ErrorBoundary({ children }: React.PropsWithChildren) {
   return (
     <Boundary
       FallbackComponent={FallbackComponent}
-      onReset={() => navigate({ to: '/' })}
+      onReset={() => navigate({ to: '/$' })}
     >
       {children}
     </Boundary>

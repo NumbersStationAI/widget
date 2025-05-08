@@ -1,9 +1,18 @@
-import { squircle } from 'ldrs'
 import { useEffect } from 'react'
 
+import { ClientOnly } from './ClientOnly'
+
 export function Spinner({ size = 1 }: { size?: number }) {
+  return <ClientOnly>{() => <Squircle size={size} />}</ClientOnly>
+}
+
+function Squircle({ size }: { size: number }) {
   useEffect(() => {
-    squircle.register()
+    async function register() {
+      const { squircle } = await import('ldrs')
+      squircle.register()
+    }
+    void register()
   }, [])
   return (
     <l-squircle

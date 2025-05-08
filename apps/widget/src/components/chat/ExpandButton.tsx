@@ -1,7 +1,8 @@
 import { Maximize } from 'lucide-react'
 
-import { TooltipButton } from 'components/Button'
-import { ReactComponent as Compress } from 'lib/icons/compress.svg?react'
+import { TooltipButton } from '@ns/ui/atoms/Button'
+
+import Compress from 'lib/icons/compress.svg?react'
 import { useLayoutStore } from 'lib/stores/layout'
 
 function ExpandButton() {

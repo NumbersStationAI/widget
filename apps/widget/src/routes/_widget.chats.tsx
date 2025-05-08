@@ -9,11 +9,22 @@ import { useChatStore } from 'lib/stores/chat'
 import { useCustomizationStore } from 'lib/stores/customization'
 import { useLayoutStore } from 'lib/stores/layout'
 
-export const Route = createFileRoute('/_widget/chats')({ component: Chats })
+type RouteSearch = Record<string, unknown> & { deepResearch?: boolean }
+
+export const Route = createFileRoute('/_widget/chats')({
+  component: Chats,
+  validateSearch: (search: Record<string, unknown>): RouteSearch => {
+    const { deepResearch } = search
+    return {
+      ...search,
+      deepResearch: typeof deepResearch === 'boolean' ? deepResearch : false,
+    }
+  },
+})
 
 function Chats() {
   const { isReadOnlyChat, cloneChat, currentChat } = useChatStore()
-  const { expanded, rightPanelOpen } = useLayoutStore()
+  const { expanded } = useLayoutStore()
   const {
     state: { showInput },
   } = useCustomizationStore()
@@ -39,9 +50,8 @@ function Chats() {
       )}
       <MessageView />
       <div
-        className={cn('flex w-full flex-col px-4', {
-          'items-center': showExpandedView && !rightPanelOpen,
-          'fixed bottom-4 items-center justify-center': !showExpandedView,
+        className={cn('flex w-full flex-col items-center px-4', {
+          'fixed bottom-4 justify-center': !showExpandedView,
         })}
       >
         {showInput && <ChatInput />}

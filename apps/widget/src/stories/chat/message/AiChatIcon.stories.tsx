@@ -1,6 +1,6 @@
 import { type Meta, type StoryObj } from '@storybook/react'
 
-import { ReactComponent as AiChatIcon } from 'lib/icons/ai-chat.svg?react'
+import AiChatIcon from 'lib/icons/ai-chat.svg?react'
 
 const meta = {
   title: 'Chat/Messages/AiChatIcon',

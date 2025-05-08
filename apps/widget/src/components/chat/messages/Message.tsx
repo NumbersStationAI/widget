@@ -2,20 +2,22 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { type SuggestionApi } from '@ns/public-api'
+import { MessageMarkdown } from '@ns/ui/molecules/MessageMarkdown'
 import {
   MessageRichTextInput,
   MessageRichTextInputContent,
 } from '@ns/ui/molecules/MessageRichTextInput'
+import { TableauEmbed } from '@ns/ui/molecules/TableauEmbed'
+import { VegaEmbed } from '@ns/ui/molecules/VegaEmbed'
 import { cn } from '@ns/ui/utils/cn'
 
 import { type ChatMessage } from 'lib/models/message'
 import { useChatStore } from 'lib/stores/chat'
+import { useLayoutStore } from 'lib/stores/layout'
+import { getAccount } from 'lib/stores/user'
 
 import { MessageContextProvider } from './MessageContext'
-import MessageMarkdown from './MessageMarkdown'
-import MessageTable from './MessageTable'
-import Tableau from './Tableau'
-import VegaEmbed from './VegaEmbed'
+import { MessageTable } from './MessageTable'
 
 export type MessageProps = {
   message: ChatMessage
@@ -24,6 +26,7 @@ export type MessageProps = {
 
 export function Message({ message, isPopoverFeedbackChat }: MessageProps) {
   const context = useMemo(() => ({ message }), [message])
+  const { viewportWidth } = useLayoutStore()
   return (
     <MessageContextProvider value={context}>
       <div
@@ -36,6 +39,8 @@ export function Message({ message, isPopoverFeedbackChat }: MessageProps) {
           </MessageRichTextInput>
         ) : message.markdown ? (
           <MessageMarkdown
+            accountName={getAccount()}
+            viewportWidth={viewportWidth}
             className={cn('!text-base', isPopoverFeedbackChat && '!text-sm')}
           >
             {message.markdown}
@@ -45,9 +50,11 @@ export function Message({ message, isPopoverFeedbackChat }: MessageProps) {
           <MessageTable isPopoverFeedbackChat={isPopoverFeedbackChat} />
         )}
         {message.vega_spec && message.vega_spec !== undefined && (
-          <VegaEmbed spec={message.vega_spec} />
+          <VegaEmbed spec={message.vega_spec} viewportWidth={viewportWidth} />
         )}
-        {message.embedded_viz_url && <Tableau url={message.embedded_viz_url} />}
+        {message.embedded_viz_url && (
+          <TableauEmbed url={message.embedded_viz_url} />
+        )}
         {message.questions && message.questions.length > 0 && (
           <div className='mt-6 flex flex-col gap-6'>
             <p className='text-[1rem]'>

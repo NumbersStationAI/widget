@@ -2,9 +2,9 @@ import { CircleAlert } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useGetChat } from '@ns/public-api'
+import { Spinner } from '@ns/ui/atoms/Spinner'
 import { cn } from '@ns/ui/utils/cn'
 
-import { Spinner } from 'components/Spinner'
 import { type ChatMessage } from 'lib/models/message'
 import { usePanelChatStore } from 'lib/stores/panelChat'
 import { getAccount } from 'lib/stores/user'

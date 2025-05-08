@@ -49,7 +49,7 @@ export const MentionsMenuItem = forwardRef<
     ConnectionIcon = getDataAssetConnectionIcon(item.connection_type)
     label = item.name
   } else {
-    throw new Error('Unexpected mention item!')
+    return null
   }
   return (
     <li

@@ -13,11 +13,11 @@ import {
   type SuggestionApi,
   updateChat,
 } from '@ns/public-api'
+import { isMessageEmpty } from '@ns/ui/utils/isMessageEmpty'
+import { replaceAll } from '@ns/ui/utils/replaceAll'
 
 import { API_URL } from 'lib/constants'
 import { type ChatMessage } from 'lib/models/message'
-import { isMessageEmpty } from 'lib/utils/message'
-import { replaceAll } from 'lib/utils/string'
 import { getAuthHeaders } from 'lib/utils/token'
 
 import { getAccount } from './user'

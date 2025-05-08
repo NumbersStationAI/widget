@@ -1,4 +1,4 @@
-export const codeStyle: any = {
+export const codeStyle: Record<string, React.CSSProperties> = {
   'hljs': {
     display: 'block',
     overflowX: 'auto',

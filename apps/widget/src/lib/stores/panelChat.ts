@@ -2,11 +2,11 @@ import { $getRoot, type LexicalEditor } from 'lexical'
 import { create } from 'zustand'
 
 import { getChatMessages, RenderType } from '@ns/public-api'
+import { isMessageEmpty } from '@ns/ui/utils/isMessageEmpty'
+import { replaceAll } from '@ns/ui/utils/replaceAll'
 
 import { API_URL } from 'lib/constants'
 import { type ChatMessage } from 'lib/models/message'
-import { isMessageEmpty } from 'lib/utils/message'
-import { replaceAll } from 'lib/utils/string'
 import { getAuthHeaders } from 'lib/utils/token'
 
 import { type InputState } from './chat'

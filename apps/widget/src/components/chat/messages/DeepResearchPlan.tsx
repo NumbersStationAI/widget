@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowUpRight,
   Atom,
@@ -5,27 +6,27 @@ import {
   Circle,
   CircleCheck,
 } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment } from 'react'
 
 import {
   type DeepResearchPlanVerifyParameters,
   InstructionState,
   type ResearchInstruction,
 } from '@ns/public-api'
-import { cn } from '@ns/ui/utils/cn'
-
-import { Button } from 'components/Button'
+import { Button } from '@ns/ui/atoms/Button'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from 'components/Collapsible'
-import { Spinner } from 'components/Spinner'
+} from '@ns/ui/atoms/Collapsible'
+import { Spinner } from '@ns/ui/atoms/Spinner'
+import { MessageMarkdown } from '@ns/ui/molecules/MessageMarkdown'
+import { cn } from '@ns/ui/utils/cn'
+
 import { useChatStore } from 'lib/stores/chat'
 import { useLayoutStore } from 'lib/stores/layout'
 import { usePanelChatStore } from 'lib/stores/panelChat'
-
-import MessageMarkdown from './MessageMarkdown'
+import { getAccount } from 'lib/stores/user'
 
 export function DeepResearchPlan({
   plan,
@@ -34,21 +35,15 @@ export function DeepResearchPlan({
   plan: DeepResearchPlanVerifyParameters
   isStreaming?: boolean
 }) {
-  const [planOpen, setPlanOpen] = useState(false)
   const { sendMessage } = useChatStore()
-  const { toggleRightPanel, rightPanelOpen } = useLayoutStore()
+  const { toggleRightPanel, rightPanelOpen, viewportWidth } = useLayoutStore()
   const {
     setActiveInstructionId,
     setActiveinstructionName,
     fetchStreamingMessages,
     activeInstructionId,
   } = usePanelChatStore()
-
-  useEffect(() => {
-    if (plan && isStreaming) {
-      setPlanOpen(true)
-    }
-  }, [plan, isStreaming])
+  const navigate = useNavigate({ from: '/chats' })
 
   const inProgress = plan.plan_steps.some((step) =>
     step.instructions?.some(
@@ -80,7 +75,7 @@ export function DeepResearchPlan({
 
   return (
     <div className='w-full'>
-      <Collapsible open={planOpen} onOpenChange={setPlanOpen}>
+      <Collapsible defaultOpen>
         <div className='w-full overflow-hidden rounded-xl border border-neutral-200 p-2'>
           <CollapsibleTrigger asChild>
             <button
@@ -112,6 +107,7 @@ export function DeepResearchPlan({
               <div className='py-2 text-lg font-bold'>
                 {plan?.plan_title || 'Preparing research plan...'}
               </div>
+              <div className='py-2 text-sm'>{plan?.plan_goal || ''}</div>
               {plan?.plan_steps.map((step, stepIndex) => (
                 <Fragment key={JSON.stringify(step.section_header)}>
                   <div className='flex items-center gap-3'>
@@ -153,7 +149,11 @@ export function DeepResearchPlan({
                           <Circle className='mt-1 h-4 w-4 flex-shrink-0 fill-neutral-300 text-neutral-300' />
                         )}
                         <div className='flex flex-1 items-start justify-between'>
-                          <MessageMarkdown className='text-sm/6'>
+                          <MessageMarkdown
+                            accountName={getAccount()}
+                            viewportWidth={viewportWidth}
+                            className='text-sm/6'
+                          >
                             {instruction.instruction}
                           </MessageMarkdown>
                           {instruction.status !== InstructionState.pending && (
@@ -188,7 +188,12 @@ export function DeepResearchPlan({
                   <Button
                     variant='default'
                     disabled={isStreaming}
-                    onClick={() => sendMessage('start research', true)}
+                    onClick={() => {
+                      sendMessage('start research', true)
+                      navigate({
+                        search: (prev) => ({ ...prev, deepResearch: false }),
+                      })
+                    }}
                   >
                     Start research
                   </Button>

@@ -5,9 +5,9 @@ interface TableauProps {
   src: string | undefined
   height?: string | number
   width?: string
-  style?: any
 }
 
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -15,17 +15,17 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
-interface Props {
+export type TableauEmbedProps = {
   url?: string
   className?: string
 }
-function Tableau({ url, className }: Props) {
+
+export function TableauEmbed({ url, className }: TableauEmbedProps) {
   return (
     <div className={cn('h-fit w-full', className)}>
       <tableau-viz id='tableauViz' src={url} hide-tabs />
     </div>
   )
 }
-
-export default Tableau

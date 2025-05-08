@@ -3,9 +3,9 @@ import { Code, Copy } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import { Button, TooltipButton } from 'components/Button'
-import { Markdown } from 'components/Markdown'
-import { Sheet, SheetClose, SheetContent } from 'components/Sheet'
+import { Button, TooltipButton } from '../atoms/Button'
+import { Markdown } from '../atoms/Markdown'
+import { Sheet, SheetClose, SheetContent } from '../atoms/Sheet'
 
 interface CodeSheetProps {
   code: string

@@ -13,53 +13,54 @@ import { toast } from 'sonner'
 
 import { readMessageTableDataAsCsv } from '@ns/public-api'
 
-import { Button, TooltipButton } from 'components/Button'
+import { Button, TooltipButton } from '../../atoms/Button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from 'components/Dropdown'
-import { Spinner } from 'components/Spinner'
-import { useChatStore } from 'lib/stores/chat'
-import { getAccount } from 'lib/stores/user'
+} from '../../atoms/DropdownMenu'
+import { Spinner } from '../../atoms/Spinner'
+import { CodeSheet } from '../CodeSheet'
 
-import { CodeSheet } from './CodeSheet'
 /* eslint-disable-next-line import/no-cycle */
 import { ExplanationSheet } from './ExplanationSheet'
-import { useMessage } from './MessageContext'
 import { type TableViewMode } from './MessageTable'
 
-type DataTableToolbarProps = {
+export type MessageTableToolbarProps = {
+  accountName: string
+  messageId: string
+  sql: string | null | undefined
   table: Table<Record<string, unknown>>
   tableViewMode: string
   setTableViewMode: (mode: TableViewMode) => void
+  showTableViewModeToggle: boolean
   isPending: boolean
   onFormatButtonClick: () => void
   isFormatted: boolean
-  isPopoverFeedbackChat?: boolean
 }
 
-export function DataTableToolbar({
+export function MessageTableToolbar({
+  accountName,
+  messageId,
+  sql,
   table,
   tableViewMode,
   setTableViewMode,
+  showTableViewModeToggle,
   isPending,
   onFormatButtonClick,
   isFormatted,
-  isPopoverFeedbackChat,
-}: DataTableToolbarProps) {
-  const { message } = useMessage()
+}: MessageTableToolbarProps) {
   return (
     <div className='flex items-center gap-2 py-2'>
       <div className='flex-1' />
       {isPending && (
-        <div className='flex items-center gap-3 text-sm leading-none text-primary'>
+        <div className='text-primary flex items-center gap-3 text-sm leading-none'>
           <Spinner size={0.4} />
           Fetching data...
         </div>
       )}
-
       {table.getRowModel().rows?.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild className='h-8'>
@@ -85,9 +86,7 @@ export function DataTableToolbar({
                     key={column.id}
                     className='capitalize'
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value: any) =>
-                      column.toggleVisibility(value)
-                    }
+                    onCheckedChange={(value) => column.toggleVisibility(value)}
                   >
                     {column.id.replace(/_/g, ' ')}
                   </DropdownMenuCheckboxItem>
@@ -104,10 +103,10 @@ export function DataTableToolbar({
       >
         <RemoveFormatting />
       </TooltipButton>
-      <ExplanationSheet messageId={message.id} />
-      <CodeSheet code={message.sql ?? ''} language='SQL' />
-      <DownloadCSVButton />
-      {tableViewMode === 'default' && (
+      <ExplanationSheet accountName={accountName} messageId={messageId} />
+      {sql != null && <CodeSheet code={sql} language='SQL' />}
+      <DownloadCSVButton accountName={accountName} messageId={messageId} />
+      {showTableViewModeToggle && tableViewMode === 'default' && (
         <TooltipButton
           size='icon'
           variant='ghost'
@@ -121,17 +120,18 @@ export function DataTableToolbar({
           <RectangleHorizontal />
         </TooltipButton>
       )}
-      {(tableViewMode === 'wide' || tableViewMode === 'full') && (
-        <TooltipButton
-          size='icon'
-          variant='ghost'
-          className='hidden md:flex'
-          onClick={() => setTableViewMode('default')}
-          tooltip='Center view'
-        >
-          <Square />
-        </TooltipButton>
-      )}
+      {showTableViewModeToggle &&
+        (tableViewMode === 'wide' || tableViewMode === 'full') && (
+          <TooltipButton
+            size='icon'
+            variant='ghost'
+            className='hidden md:flex'
+            onClick={() => setTableViewMode('default')}
+            tooltip='Center view'
+          >
+            <Square />
+          </TooltipButton>
+        )}
       {(tableViewMode === 'default' || tableViewMode === 'wide') && (
         <TooltipButton
           size='icon'
@@ -157,15 +157,21 @@ export function DataTableToolbar({
   )
 }
 
-function DownloadCSVButton() {
-  const { currentChat } = useChatStore()
-  const { message } = useMessage()
+function DownloadCSVButton({
+  name,
+  accountName,
+  messageId,
+}: {
+  name?: string
+  accountName: string
+  messageId: string
+}) {
   const onClick = async () => {
     const data = await readMessageTableDataAsCsv(
-      { accountName: getAccount(), messageId: message.id },
+      { accountName, messageId },
       { responseType: 'blob' },
     )
-    download(data as Blob, `${currentChat?.name ?? 'export'}.csv`, 'text/csv')
+    download(data as Blob, `${name ?? 'export'}.csv`, 'text/csv')
   }
   return (
     <TooltipButton

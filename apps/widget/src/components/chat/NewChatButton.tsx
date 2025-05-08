@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
 import React from 'react'
 
+import { Button } from '@ns/ui/atoms/Button'
 import { cn } from '@ns/ui/utils/cn'
 
-import { Button } from 'components/Button'
-import { ReactComponent as Add } from 'lib/icons/add.svg?react'
+import Add from 'lib/icons/add.svg?react'
 import { useChatStore } from 'lib/stores/chat'
 import { useLayoutStore } from 'lib/stores/layout'
 

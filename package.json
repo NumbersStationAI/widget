@@ -1,6 +1,6 @@
 {
   "name": "@ns/frontend",
-  "version": "188.21.2",
+  "version": "192.5.0",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
@@ -29,7 +29,8 @@
       "cookie": "^0.7.0",
       "express": ">=4.21.2",
       "resolve-url-loader": ">=5.0.0",
-      "@svgr/webpack": ">=8.1.0"
+      "@svgr/webpack": ">=8.1.0",
+      "refractor>prismjs": "1.30.0"
     }
   }
 }

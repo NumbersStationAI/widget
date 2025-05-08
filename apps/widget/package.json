@@ -1,6 +1,6 @@
 {
   "name": "@ns/widget",
-  "version": "188.21.2",
+  "version": "192.5.0",
   "private": true,
   "type": "module",
   "homepage": ".",
@@ -10,7 +10,8 @@
     "serve": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=100",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=70",
+    "typecheck": "tsc --noEmit",
     "format": "prettier src --write"
   },
   "prettier": "@ns/prettier-config",
@@ -70,7 +71,7 @@
     "sonner": "^1.7.0",
     "tailwindcss-animate": "^1.0.7",
     "usehooks-ts": "^3.1.0",
-    "vega-embed": "^6.26.0",
+    "vega-embed": "^6.29.0",
     "web-vitals": "^4.2.4",
     "zod": "^3.23.8",
     "zustand": "^5.0.1"

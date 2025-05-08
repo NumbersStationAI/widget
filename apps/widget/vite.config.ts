@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
       TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
       react(),
       tsconfigPaths(),
-      svgr({ svgrOptions: { exportType: 'named' } }),
+      svgr(),
     ],
   }
 })

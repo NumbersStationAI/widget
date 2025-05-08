@@ -5,12 +5,12 @@ import { useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { getChat, UserRole } from '@ns/public-api'
+import { TooltipProvider } from '@ns/ui/atoms/Tooltip'
 
 import { WidgetProvider } from 'ChatProvider'
 import { editorConfig } from 'components/chatEditorConfig'
 import { ErrorBoundary } from 'components/ErrorBoundary'
 import { Toaster } from 'components/Toast'
-import { TooltipProvider } from 'components/Tooltip'
 import { useChatStore } from 'lib/stores/chat'
 import { defaultState, useCustomizationStore } from 'lib/stores/customization'
 import { useDatasetStore } from 'lib/stores/datasets'

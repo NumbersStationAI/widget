@@ -1,26 +1,22 @@
-import { Check, ChevronDown, InfoIcon } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { InfoIcon } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { InstructionState, RenderType } from '@ns/public-api'
+import { Alert, AlertDescription } from '@ns/ui/atoms/Alert'
+import { ProgressMessageCollapsible } from '@ns/ui/molecules/ProgressMessageCollapsible'
 import { cn } from '@ns/ui/utils/cn'
+import { getMessageKey } from '@ns/ui/utils/getMessageKey'
 
-import { Alert, AlertDescription } from 'components/Alert'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from 'components/Collapsible'
 import { DownloadPDFButton } from 'components/DownloadPDFButton'
 import { ExportPDFButton } from 'components/ExportPDFButton'
 import { Separator } from 'components/Separator'
-import { Spinner } from 'components/Spinner'
-import { ReactComponent as AiChatIcon } from 'lib/icons/ai-chat.svg?react'
+import AiChatIcon from 'lib/icons/ai-chat.svg?react'
 import { type ChatMessage } from 'lib/models/message'
-import { getMessageKey } from 'lib/utils/message'
+import { useLayoutStore } from 'lib/stores/layout'
+import { getAccount } from 'lib/stores/user'
 
 import { DeepResearchPlan } from './DeepResearchPlan'
 import { Message } from './Message'
-import MessageMarkdown from './MessageMarkdown'
 import { MessageTooltips } from './MessageTooltips'
 
 interface MessageGroupProps {
@@ -42,18 +38,13 @@ export default function MessageGroupView({
   isPopoverFeedbackChat = false,
   className,
 }: MessageGroupProps) {
-  const progressMessages = useMemo(
-    () =>
-      messages.filter(
-        (message) =>
-          message.render_type === RenderType.TEMPORARY ||
-          message.render_type === 'LOADING',
-      ),
-    [messages],
+  const progressMessages = messages.filter(
+    (message) =>
+      message.render_type === RenderType.TEMPORARY ||
+      message.render_type === 'LOADING',
   )
-  const thinkingMessages = useMemo(
-    () => messages.filter((message) => message.render_type === RenderType.SOFT),
-    [messages],
+  const thinkingMessages = messages.filter(
+    (message) => message.render_type === RenderType.SOFT,
   )
   const chatMessages = useMemo(
     () =>
@@ -79,6 +70,8 @@ export default function MessageGroupView({
     [isStreaming, isResearchInProgress],
   )
 
+  const { viewportWidth } = useLayoutStore()
+
   return (
     <div
       className={cn(
@@ -101,54 +94,20 @@ export default function MessageGroupView({
           </div>
         )}
         {progressMessages.length + thinkingMessages.length > 0 && (
-          <Collapsible open={thinkingOpen} onOpenChange={setThinkingOpen}>
-            <CollapsibleTrigger asChild>
-              <button
-                type='button'
-                className='group/progress-messages flex h-8 items-center gap-3 rounded-xl bg-neutral-50 px-3 text-sm font-medium'
-              >
-                {progressMessages.length === 0 ? (
-                  <Check className='h-4 w-4' />
-                ) : (
-                  <Spinner size={0.5} />
-                )}
-                {progressMessages.length === 0 ? (
-                  <span>Completed</span>
-                ) : progressMessages[progressMessages.length - 1]?.markdown !=
-                  null ? (
-                  <MessageMarkdown>
-                    {progressMessages[progressMessages.length - 1].markdown ??
-                      ''}
-                  </MessageMarkdown>
-                ) : (
-                  <span>Running</span>
-                )}
-                {thinkingMessages.length > 0 && (
-                  <ChevronDown className='h-4 w-4 transition group-aria-expanded/progress-messages:rotate-180' />
-                )}
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className='mt-2.5 border-l-2 border-neutral-200 px-3'>
-              {thinkingMessages.map((thinkingMessage, index, all) => (
-                <Fragment key={thinkingMessage.id}>
-                  <div className='my-3'>
-                    <MessageMarkdown className='text-neutral-400'>
-                      {thinkingMessage.markdown ?? ''}
-                    </MessageMarkdown>
-                  </div>
-                  {index === all.length - 1 && isStreaming && (
-                    <p className='animate-pulse text-sm'>Thinking...</p>
-                  )}
-                  <div className='my-3 h-px bg-neutral-200 last:hidden' />
-                </Fragment>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
+          <ProgressMessageCollapsible
+            accountName={getAccount()}
+            viewportWidth={viewportWidth}
+            open={thinkingOpen}
+            onOpenChange={setThinkingOpen}
+            isStreaming={isStreaming}
+            softMessages={thinkingMessages}
+            temporaryMessages={progressMessages}
+          />
         )}
         {chatMessages.map((message) => (
           <Message
             message={message}
-            key={getMessageKey(message.id, message.response_index)}
+            key={getMessageKey(message)}
             isPopoverFeedbackChat={isPopoverFeedbackChat}
           />
         ))}

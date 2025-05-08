@@ -1,6 +1,7 @@
 import { ArrowLeftToLine, Menu } from 'lucide-react'
 
-import { TooltipButton } from 'components/Button'
+import { TooltipButton } from '@ns/ui/atoms/Button'
+
 import { useLayoutStore } from 'lib/stores/layout'
 
 function SidebarButton() {

@@ -1,6 +1,6 @@
 import { AlertCircle } from 'lucide-react'
 
-import { Alert, AlertDescription, AlertTitle } from 'components/Alert'
+import { Alert, AlertDescription, AlertTitle } from '@ns/ui/atoms/Alert'
 
 interface Props {
   message: string
